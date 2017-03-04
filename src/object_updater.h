@@ -15,16 +15,16 @@ class ObjectUpdater {
   const T* LockCurrentObject();
   void ReleaseCurrentObject();
 
-  const T* GetFreeObject();
-  void AddObject(const T* object);
+  T* GetFreeObject();
+  void AddObject(T* object);
 
-  void SetCurrentObject(const T* object);
+  void SetCurrentObject(T* object);
 
  private:
-  std::atomic<const T*> current_object_;
-  std::atomic<const T*> return_bucket_;
-  std::vector<const T*> free_objects_;
-  const T* locked_current_object_;
+  std::atomic<T*> current_object_;
+  std::atomic<T*> return_bucket_;
+  std::vector<T*> free_objects_;
+  T* locked_current_object_;
 };
 
 
@@ -49,7 +49,7 @@ const T* ObjectUpdater<T>::LockCurrentObject() {
 template <typename T>
 void ObjectUpdater<T>::ReleaseCurrentObject() {
   assert(locked_current_object_ != nullptr);
-  const T* null_object = nullptr;
+  T* null_object = nullptr;
   if (current_object_.compare_exchange_strong(
           null_object, locked_current_object_)) {
     locked_current_object_ = nullptr;
@@ -61,28 +61,28 @@ void ObjectUpdater<T>::ReleaseCurrentObject() {
 }
 
 template <typename T>
-const T* ObjectUpdater<T>::GetFreeObject() {
+T* ObjectUpdater<T>::GetFreeObject() {
   assert(!free_objects_.empty());
-  const T* free_object_ = free_objects_.back();
+  T* free_object_ = free_objects_.back();
   free_objects_.pop_back();
   debug() << "GetFreeObject() = " << free_object_;
   return free_object_;
 }
 
 template <typename T>
-void ObjectUpdater<T>::AddObject(const T* object) {
+void ObjectUpdater<T>::AddObject(T* object) {
   debug() << "AddObject(" << object << ")";
   free_objects_.push_back(object);
 }
 
 template <typename T>
-void ObjectUpdater<T>::SetCurrentObject(const T* object) {
+void ObjectUpdater<T>::SetCurrentObject(T* object) {
   debug() << "SetCurrentObject(" << object << ")";
-  const T* returned_object = return_bucket_.exchange(nullptr);
+  T* returned_object = return_bucket_.exchange(nullptr);
   if (returned_object != nullptr) {
     AddObject(returned_object);
   }
-  const T* old_object = current_object_.exchange(object);
+  T* old_object = current_object_.exchange(object);
   if (old_object != nullptr) {
     AddObject(old_object);
   }

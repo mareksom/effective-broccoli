@@ -19,25 +19,38 @@ class Viewer;
 
 class Painter {
  public:
+  struct SurfaceBuffer {
+    Cairo::RefPtr<Cairo::ImageSurface> surface;
+    double start_x;
+    double start_y;
+  };
+
   Painter(Board* board, int width, int height);
 
   void SetViewer(Viewer* viewer);
   void Start();
 
-  const Cairo::RefPtr<Cairo::ImageSurface>* GetAndLockCurrentSurface();
-  void ReleaseCurrentSurface();
+  const SurfaceBuffer* GetAndLockCurrentSurfaceBuffer();
+  void ReleaseCurrentSurfaceBuffer();
 
-  void SetTransformation(double x, double y, double scale);
+  void Translate(double dx, double dy);
+  void Zoom(double x, double y, double factor);
 
  private:
+  struct Modification {
+    double tx;
+    double ty;
+    double scale;
+  };
+
   std::pair<double, double> BoardToSurfaceCoordinates(double x, double y) const;
   std::pair<double, double> SurfaceToBoardCoordinates(double x, double y) const;
 
-  struct Modification;
-
+  void SetModification();
   void UpdateCurrentSurface();
   void DrawLoop();
-  void ApplyTranslation(double dx, double dy);
+  void ApplyTranslation(int dx, int dy);
+  void ApplyBruteForceModification(int dx, int dy, double scale);
   void ApplyModification(const Modification* modification);
   void ProcessAField();
 
@@ -47,30 +60,24 @@ class Painter {
 
   // ----------------------------- Modifications ---------------------------- //
 
-  struct Modification {
-    double x;
-    double y;
-    double scale;
-  };
-
-  ObjectUpdaterConsume<Modification> object_updater_consume_;
+  double mod_tx_, mod_ty_, mod_scale_;
+  ObjectUpdaterConsume<Modification> modification_updater_;
 
 
   // -------------------------------- Drawing ------------------------------- //
 
-  // Drawing thread.
-  std::thread thread_;
-
   int width_, height_;
-  double x_, y_;
+
+  int tx_, ty_;
+  double micro_dx_, micro_dy_;
   double scale_;
 
   std::set<std::pair<int, int>> fields_to_draw_;
 
   Cairo::RefPtr<Cairo::ImageSurface> main_surface_;
   Cairo::RefPtr<Cairo::Context> context_;
-  Cairo::RefPtr<Cairo::ImageSurface> surfaces[3];
-  ObjectUpdater<Cairo::RefPtr<Cairo::ImageSurface>> object_updater_;
+  SurfaceBuffer surface_buffers_[3];
+  ObjectUpdater<SurfaceBuffer> surface_buffer_updater_;
 };
 
 #endif  // PAINTER_H_

@@ -8,20 +8,26 @@
 #include "surface_utils.h"
 #include "viewer.h"
 
+#warning Zmienić sklaę 100 na coś sensowngeo (np. 1).
 Painter::Painter(Board* board, int width, int height)
     : board_(board), viewer_(nullptr),
-      width_(width), height_(height), x_(0), y_(0), scale_(1) {
+      width_(width), height_(height),
+      mod_tx_(0), mod_ty_(0), mod_scale_(100),
+      tx_(0), ty_(0), micro_dx_(0), micro_dy_(0), scale_(100) {
   assert(width > 0);
   assert(height > 0);
   main_surface_ = Cairo::ImageSurface::create(
       Cairo::Format::FORMAT_RGB24, width * 2, height * 2);
   context_ = Cairo::Context::create(main_surface_);
   for (int i = 0; i < 3; i++) {
-    surfaces[i] = Cairo::ImageSurface::create(
+    surface_buffers_[i].surface = Cairo::ImageSurface::create(
         Cairo::Format::FORMAT_RGB24, width * 2, height * 2);
-    object_updater_.AddObject(&surfaces[i]);
+    surface_buffers_[i].start_x = 0;
+    surface_buffers_[i].start_y = 0;
+    surface_buffer_updater_.AddObject(&surface_buffers_[i]);
   }
-  object_updater_.SetCurrentObject(object_updater_.GetFreeObject());
+  surface_buffer_updater_.SetCurrentObject(
+      surface_buffer_updater_.GetFreeObject());
 }
 
 void Painter::SetViewer(Viewer* viewer) {
@@ -30,78 +36,83 @@ void Painter::SetViewer(Viewer* viewer) {
 }
 
 void Painter::Start() {
-  #warning Zanim wywoła się pierwszy obrót pętli, to current_surface_ jest nullem.
-  thread_ = std::thread(
-      [this]() -> void {
-        DrawLoop();
-      });
-  thread_.detach();
+  std::thread([this]() -> void {
+                DrawLoop();
+              }).detach();
 }
 
-const Cairo::RefPtr<Cairo::ImageSurface>* Painter::GetAndLockCurrentSurface() {
-  return object_updater_.LockCurrentObject();
+const Painter::SurfaceBuffer* Painter::GetAndLockCurrentSurfaceBuffer() {
+  return surface_buffer_updater_.LockCurrentObject();
 }
 
-void Painter::ReleaseCurrentSurface() {
-  object_updater_.ReleaseCurrentObject();
+void Painter::ReleaseCurrentSurfaceBuffer() {
+  surface_buffer_updater_.ReleaseCurrentObject();
 }
 
-void Painter::SetTransformation(double x, double y, double scale) {
-  debug() << "Painter::SetTransformation(" << imie(x) << imie(y) << imie(scale) << ")";
-  Modification* mod = object_updater_consume_.GetFreeObject();
-  mod->x = x;
-  mod->y = y;
-  mod->scale = scale;
-  object_updater_consume_.SetCurrentObject(mod);
+void Painter::Translate(double dx, double dy) {
+  mod_tx_ += dx;
+  mod_ty_ += dy;
+  SetModification();
+}
+
+void Painter::Zoom(double x, double y, double factor) {
+  x += width_ / 2.0;
+  y += height_ / 2.0;
+  mod_tx_ = x + (mod_tx_ - x) * factor;
+  mod_ty_ = y + (mod_ty_ - y) * factor;
+  mod_scale_ *= factor;
+  SetModification();
 }
 
 std::pair<double, double> Painter::BoardToSurfaceCoordinates(
     double x, double y) const {
-  return std::make_pair((x - x_) * scale_ + width_,
-                        (y - y_) * scale_ + height_);
+  return std::make_pair(x * scale_ + tx_, y * scale_ + ty_);
 }
 
 std::pair<double, double> Painter::SurfaceToBoardCoordinates(
     double x, double y) const {
-  return std::make_pair((x - width_) / scale_ + x_,
-                        (y - height_) / scale_ + y_);
+  return std::make_pair((x - tx_) / scale_, (y - ty_) / scale_);
+}
+
+void Painter::SetModification() {
+  Modification* modification = modification_updater_.GetFreeObject();
+  modification->tx = mod_tx_;
+  modification->ty = mod_ty_;
+  modification->scale = mod_scale_;
+  modification_updater_.SetCurrentObject(modification);
 }
 
 void Painter::UpdateCurrentSurface() {
-  auto surface = object_updater_.GetFreeObject();
-  CopySurface(main_surface_, *surface);
-  object_updater_.SetCurrentObject(surface);
+  SurfaceBuffer* surface_buffer = surface_buffer_updater_.GetFreeObject();
+  CopySurface(main_surface_, surface_buffer->surface);
+  surface_buffer->start_x = -width_ / 2.0 + micro_dx_;
+  surface_buffer->start_y = -height_ / 2.0 + micro_dy_;
+  surface_buffer_updater_.SetCurrentObject(surface_buffer);
   viewer_->Redraw();
 }
 
 void Painter::DrawLoop() {
   while (true) {
     const Modification* mod =
-        object_updater_consume_.LockCurrentObject(false /* Don't block. */);
+        modification_updater_.LockCurrentObject(false /* Don't block. */);
     if (mod == nullptr and fields_to_draw_.empty()) {
-      mod = object_updater_consume_.LockCurrentObject(true /* Do block. */);
+      mod = modification_updater_.LockCurrentObject(true /* Do block. */);
     }
     if (mod != nullptr) {
       ApplyModification(mod);
-      object_updater_consume_.ReleaseCurrentObject();
+      modification_updater_.ReleaseCurrentObject();
     } else {
       ProcessAField();
     }
   }
 }
 
-void Painter::ApplyTranslation(double dx, double dy) {
-  #warning Zrobić smooth przesuwanie, przekładając obowiązek mikroprzesunięcia na Widget.
-  int dix = static_cast<int>(std::round(dx * scale_));
-  int diy = static_cast<int>(std::round(dy * scale_));
-  if (dix == 0 and diy == 0) {
-    return;
-  }
+void Painter::ApplyTranslation(int dx, int dy) {
   auto old_ul = SurfaceToBoardCoordinates(0, 0);
   auto old_lr = SurfaceToBoardCoordinates(width_ * 2, height_ * 2);
-  x_ += dix / scale_;
-  y_ += diy / scale_;
-  ShiftSurface(main_surface_, -dix, -diy);
+  tx_ += dx;
+  ty_ += dy;
+  ShiftSurface(main_surface_, dx, dy);
   auto ul = SurfaceToBoardCoordinates(0, 0);
   auto lr = SurfaceToBoardCoordinates(width_ * 2, height_ * 2);
 
@@ -123,25 +134,27 @@ void Painter::ApplyTranslation(double dx, double dy) {
         });
   };
 
-  if (dix <= 0 and diy <= 0) {
+  if (dx == 0 and dy == 0) {
+    // Nothing to do.
+  } else if (dx >= 0 and dy >= 0) {
     ClearRectangle(lr.first, old_ul.second, old_lr.first, old_lr.second);
     ClearRectangle(old_ul.first, lr.second, lr.first, old_lr.second);
     AddRectangle(ul.first, ul.second, old_ul.first, lr.second);
     AddRectangle(old_ul.first, ul.second, lr.first, old_ul.second);
-  } else if (dix > 0 and diy > 0) {
+  } else if (dx < 0 and dy < 0) {
     ClearRectangle(old_ul.first, old_ul.second, ul.first, old_lr.second);
     ClearRectangle(ul.first, old_ul.second, old_lr.first, ul.second);
     AddRectangle(old_lr.first, ul.second, lr.first, lr.second);
     AddRectangle(ul.first, old_lr.second, old_lr.first, lr.second);
-  } else if (dix > 0) {
-    assert(diy <= 0);
+  } else if (dx < 0) {
+    assert(dy >= 0);
     ClearRectangle(old_ul.first, old_ul.second, ul.first, old_lr.second);
     ClearRectangle(ul.first, lr.second, old_lr.first, old_lr.second);
     AddRectangle(old_lr.first, ul.second, lr.first, lr.second);
     AddRectangle(ul.first, ul.second, old_lr.first, old_ul.second);
   } else {
-    assert(dix <= 0);
-    assert(diy > 0);
+    assert(dx >= 0);
+    assert(dy < 0);
     ClearRectangle(lr.first, old_ul.second, old_lr.first, old_lr.second);
     ClearRectangle(old_ul.first, old_ul.second, old_lr.first, ul.second);
     AddRectangle(ul.first, ul.second, old_ul.first, lr.second);
@@ -150,22 +163,37 @@ void Painter::ApplyTranslation(double dx, double dy) {
   UpdateCurrentSurface();
 }
 
+void Painter::ApplyBruteForceModification(int tx, int ty, double scale) {
+  tx_ = tx;
+  ty_ = ty;
+  scale_ = scale;
+  auto upper_left = SurfaceToBoardCoordinates(0, 0);
+  auto lower_right = SurfaceToBoardCoordinates(width_ * 2, height_ * 2);
+  fields_to_draw_.clear();
+  board_->IterateFieldsInRectangle(
+      upper_left.first, upper_left.second,
+      lower_right.first, lower_right.second,
+      [this](int x, int y) -> void {
+        fields_to_draw_.emplace(x, y);
+      });
+  context_->save();
+    context_->set_source_rgb(0, 0, 0);
+    context_->paint();
+  context_->restore();
+  UpdateCurrentSurface();
+}
+
 void Painter::ApplyModification(const Modification* modification) {
-  if (std::abs(scale_ - modification->scale) < 1e-9) {
-    ApplyTranslation(modification->x - x_, modification->y - y_);
+  const int new_tx = static_cast<int>(modification->tx);
+  const int new_ty = static_cast<int>(modification->ty);
+  micro_dx_ = modification->tx - new_tx;
+  micro_dy_ = modification->ty - new_ty;
+  if (std::abs(scale_ - modification->scale) < 1e-9 and
+      std::abs(new_tx - tx_) <= width_ * 3 / 2 and
+      std::abs(new_ty - ty_) <= height_ * 3 / 2) {
+    ApplyTranslation(new_tx - tx_, new_ty - ty_);
   } else {
-    x_ = modification->x;
-    y_ = modification->y;
-    scale_ = modification->scale;
-    fields_to_draw_.clear();
-    auto upper_left = SurfaceToBoardCoordinates(0, 0);
-    auto lower_right = SurfaceToBoardCoordinates(width_ * 2, height_ * 2);
-    board_->IterateFieldsInRectangle(
-        upper_left.first, upper_left.second,
-        lower_right.first, lower_right.second,
-        [this](int x, int y) -> void {
-          fields_to_draw_.emplace(x, y);
-        });
+    ApplyBruteForceModification(new_tx, new_ty, modification->scale);
   }
 }
 
@@ -178,9 +206,8 @@ void Painter::ProcessAField() {
     const int y = it->second;
     fields_to_draw_.erase(it);
     context_->save();
-      context_->translate(width_, height_);
+      context_->translate(tx_, ty_);
       context_->scale(scale_, scale_);
-      context_->translate(-x_, -y_);
       board_->DrawField(x, y, context_);
     context_->restore();
   }

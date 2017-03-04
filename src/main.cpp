@@ -14,6 +14,7 @@ int main(int argc, char** argv) {
 
   auto board = std::make_unique<SquareBoard>();
 
+  #warning Change resolution.
   Painter painter(board.get(), 600, 600);
   Viewer viewer(&painter);
   painter.SetViewer(&viewer);

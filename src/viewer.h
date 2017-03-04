@@ -21,10 +21,7 @@ class Viewer : public Gtk::DrawingArea {
  private:
   Painter* painter_;
 
-  double x_, y_;
-  double scale_;
-
-  Glib::Dispatcher dispatcher_;
+  Glib::Dispatcher redraw_signal_;
 };
 
 #endif  // VIEWER_H_
