@@ -23,6 +23,22 @@ void Options::SetWindowSizeOnStart(int width, int height) {
   window_height_on_start_ = height;
 }
 
+int Options::NumberOfFieldsProcessedPerFrame() const {
+  return number_of_fields_processed_per_frame_;
+}
+
+void Options::SetNumberOfFieldsProcessedPerFrame(int number_of_fields) {
+  number_of_fields_processed_per_frame_ = number_of_fields;
+}
+
+double Options::InitialScale() const {
+  return initial_scale_;
+}
+
+void Options::SetInitialScale(double scale) {
+  initial_scale_ = scale;
+}
+
 double Options::ScrollSpeed() const {
   return scroll_speed_;
 }

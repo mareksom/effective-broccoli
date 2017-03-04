@@ -5,16 +5,18 @@
 
 #include "board.h"
 #include "makra.h"
+#include "options.h"
 #include "surface_utils.h"
 #include "viewer.h"
 
-#warning Zmienić sklaę 100 na coś sensowngeo (np. 1).
 Painter::Painter(Board* board, int width, int height)
     : board_(board), viewer_(nullptr),
-      modification_{width / 2.0, height / 2.0, 100, width, height},
-      // @width_ and @height_ will be initialized after first modification.
+      modification_{width / 2.0, height / 2.0, options.InitialScale(),
+                    width, height},
+      // Values: @width_, @height_, @tx_, @ty_, @micro_dx_, @micro_dy_, @scale_
+      // will be initialized after first modification.
       width_(0), height_(0),
-      tx_(0), ty_(0), micro_dx_(0), micro_dy_(0), scale_(100) {
+      tx_(0), ty_(0), micro_dx_(0), micro_dy_(0), scale_(1) {
   assert(width > 0);
   assert(height > 0);
   // Sets up main surfaces.
@@ -263,7 +265,7 @@ void Painter::ApplyModification(const Modification* modification) {
 
 void Painter::ProcessSomeFields() {
   if (fields_to_draw_.empty()) return;
-  int cnt = 500;
+  int cnt = options.NumberOfFieldsProcessedPerFrame();
   while (!fields_to_draw_.empty() and cnt-- > 0) {
     auto it = fields_to_draw_.begin();
     const int x = it->first;
