@@ -107,7 +107,7 @@ void Painter::DrawLoop() {
       ApplyModification(mod);
       modification_updater_.ReleaseCurrentObject();
     } else {
-      ProcessAField();
+      ProcessSomeFields();
     }
   }
 }
@@ -237,9 +237,9 @@ void Painter::ApplyModification(const Modification* modification) {
   ApplyBruteForceModification(new_tx, new_ty, new_scale);
 }
 
-void Painter::ProcessAField() {
+void Painter::ProcessSomeFields() {
   if (fields_to_draw_.empty()) return;
-  int cnt = 200;
+  int cnt = 500;
   while (!fields_to_draw_.empty() and cnt-- > 0) {
     auto it = fields_to_draw_.begin();
     const int x = it->first;

@@ -53,7 +53,7 @@ class Painter {
   void ApplyZoom(int new_tx, int new_ty, double new_scale);
   void ApplyBruteForceModification(int dx, int dy, double scale);
   void ApplyModification(const Modification* modification);
-  void ProcessAField();
+  void ProcessSomeFields();
 
   Board* board_;
   Viewer* viewer_;
