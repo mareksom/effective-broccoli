@@ -2,6 +2,7 @@
 #include <gtkmm/window.h>
 #include <thread>
 
+#include "hex_board.h"
 #include "makra.h"
 #include "options.h"
 #include "painter.h"
@@ -13,7 +14,8 @@ int main(int argc, char** argv) {
       Gtk::Application::create(argc, argv);
   Gtk::Window window;
 
-  auto board = std::make_unique<SquareBoard>();
+  //auto board = std::make_unique<SquareBoard>();
+  auto board = std::make_unique<HexBoard>();
 
   Painter painter(
     board.get(), options.WindowWidthOnStart(), options.WindowHeightOnStart());
