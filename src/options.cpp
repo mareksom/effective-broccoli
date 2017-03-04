@@ -2,6 +2,27 @@
 
 Options::Options() {}
 
+bool Options::MaximizeOnStart() const {
+  return maximize_on_start_;
+}
+
+void Options::SetMaximizeOnStart(bool maximize) {
+  maximize_on_start_ = maximize;
+}
+
+int Options::WindowWidthOnStart() const {
+  return window_width_on_start_;
+}
+
+int Options::WindowHeightOnStart() const {
+  return window_height_on_start_;
+}
+
+void Options::SetWindowSizeOnStart(int width, int height) {
+  window_width_on_start_ = width;
+  window_height_on_start_ = height;
+}
+
 double Options::ScrollSpeed() const {
   return scroll_speed_;
 }

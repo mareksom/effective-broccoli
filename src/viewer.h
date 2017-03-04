@@ -17,6 +17,7 @@ class Viewer : public Gtk::DrawingArea {
 
   bool on_draw(const Cairo::RefPtr<Cairo::Context>& context) override;
   bool on_scroll_event(GdkEventScroll* event) override;
+  bool on_configure_event(GdkEventConfigure* event) override;
 
  private:
   Painter* painter_;

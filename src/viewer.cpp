@@ -7,9 +7,10 @@
 #include "painter.h"
 
 Viewer::Viewer(Painter* painter) : painter_(painter) {
-  add_events(Gdk::SMOOTH_SCROLL_MASK);
   add_events(Gdk::KEY_PRESS_MASK);
   add_events(Gdk::KEY_RELEASE_MASK);
+  add_events(Gdk::SMOOTH_SCROLL_MASK);
+  add_events(Gdk::STRUCTURE_MASK);
   set_can_focus(true);
   grab_focus();
   redraw_signal_.connect(
@@ -47,5 +48,10 @@ bool Viewer::on_scroll_event(GdkEventScroll* event) {
                           -event->delta_y * options.ScrollSpeed());
     }
   }
+  return true;
+}
+
+bool Viewer::on_configure_event(GdkEventConfigure* event) {
+  painter_->Resize(event->width, event->height);
   return true;
 }

@@ -11,8 +11,9 @@
 #warning Zmienić sklaę 100 na coś sensowngeo (np. 1).
 Painter::Painter(Board* board, int width, int height)
     : board_(board), viewer_(nullptr),
-      width_(width), height_(height),
-      mod_tx_(0), mod_ty_(0), mod_scale_(100),
+      modification_{width / 2.0, height / 2.0, 100, width, height},
+      // @width_ and @height_ will be initialized after first modification.
+      width_(0), height_(0),
       tx_(0), ty_(0), micro_dx_(0), micro_dy_(0), scale_(100) {
   assert(width > 0);
   assert(height > 0);
@@ -33,6 +34,8 @@ Painter::Painter(Board* board, int width, int height)
   }
   surface_buffer_updater_.SetCurrentObject(
       surface_buffer_updater_.GetFreeObject());
+  // The initializing modification.
+  SetModification();
 }
 
 void Painter::SetViewer(Viewer* viewer) {
@@ -54,18 +57,26 @@ void Painter::ReleaseCurrentSurfaceBuffer() {
   surface_buffer_updater_.ReleaseCurrentObject();
 }
 
+void Painter::Resize(int width, int height) {
+  modification_.tx -= (modification_.width - width) / 2.0;
+  modification_.ty -= (modification_.height - height) / 2.0;
+  modification_.width = width;
+  modification_.height = height;
+  SetModification();
+}
+
 void Painter::Translate(double dx, double dy) {
-  mod_tx_ += dx;
-  mod_ty_ += dy;
+  modification_.tx += dx;
+  modification_.ty += dy;
   SetModification();
 }
 
 void Painter::Zoom(double x, double y, double factor) {
-  x += width_ / 2.0;
-  y += height_ / 2.0;
-  mod_tx_ = x + (mod_tx_ - x) * factor;
-  mod_ty_ = y + (mod_ty_ - y) * factor;
-  mod_scale_ *= factor;
+  x += modification_.width / 2.0;
+  y += modification_.height / 2.0;
+  modification_.tx = x + (modification_.tx - x) * factor;
+  modification_.ty = y + (modification_.ty - y) * factor;
+  modification_.scale *= factor;
   SetModification();
 }
 
@@ -81,14 +92,17 @@ std::pair<double, double> Painter::SurfaceToBoardCoordinates(
 
 void Painter::SetModification() {
   Modification* modification = modification_updater_.GetFreeObject();
-  modification->tx = mod_tx_;
-  modification->ty = mod_ty_;
-  modification->scale = mod_scale_;
+  *modification = modification_;
   modification_updater_.SetCurrentObject(modification);
 }
 
 void Painter::UpdateCurrentSurface() {
   SurfaceBuffer* surface_buffer = surface_buffer_updater_.GetFreeObject();
+  if (surface_buffer->surface->get_width() != width_ * 2 or
+      surface_buffer->surface->get_height() != height_ * 2) {
+    surface_buffer->surface = Cairo::ImageSurface::create(
+        Cairo::Format::FORMAT_RGB24, width_ * 2, height_ * 2);
+  }
   CopySurface(main_surface_[current_main_surface_], surface_buffer->surface);
   surface_buffer->start_x = -width_ / 2.0 + micro_dx_;
   surface_buffer->start_y = -height_ / 2.0 + micro_dy_;
@@ -224,15 +238,25 @@ void Painter::ApplyModification(const Modification* modification) {
   const double new_scale = modification->scale;
   micro_dx_ = modification->tx - new_tx;
   micro_dy_ = modification->ty - new_ty;
+  if (modification->width != width_ or modification->height != height_) {
+    // Resizes only main surfaces.  Surface buffers will be lazily updated.
+    width_ = modification->width;
+    height_ = modification->height;
+    context_.clear();
+    for (int i = 0; i < 2; i++) {
+      main_surface_[i] = Cairo::ImageSurface::create(
+          Cairo::Format::FORMAT_RGB24, width_ * 2, height_ * 2);
+    }
+    context_ = Cairo::Context::create(main_surface_[current_main_surface_]);
+    return ApplyBruteForceModification(new_tx, new_ty, new_scale);
+  }
   if (std::abs(scale_ - new_scale) < 1e-9 and
       std::abs(new_tx - tx_) <= width_ * 3 / 2 and
       std::abs(new_ty - ty_) <= height_ * 3 / 2) {
-    ApplyTranslation(new_tx - tx_, new_ty - ty_);
-    return;
+    return ApplyTranslation(new_tx - tx_, new_ty - ty_);
   }
   if (std::abs(scale_ - new_scale) > 1e-9) {
-    ApplyZoom(new_tx, new_ty, new_scale);
-    return;
+    return ApplyZoom(new_tx, new_ty, new_scale);
   }
   ApplyBruteForceModification(new_tx, new_ty, new_scale);
 }

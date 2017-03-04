@@ -3,6 +3,7 @@
 #include <thread>
 
 #include "makra.h"
+#include "options.h"
 #include "painter.h"
 #include "square_board.h"
 #include "viewer.h"
@@ -14,15 +15,17 @@ int main(int argc, char** argv) {
 
   auto board = std::make_unique<SquareBoard>();
 
-  #warning Change resolution.
-  Painter painter(board.get(), 600, 600);
+  Painter painter(
+    board.get(), options.WindowWidthOnStart(), options.WindowHeightOnStart());
   Viewer viewer(&painter);
   painter.SetViewer(&viewer);
   painter.Start();
 
   window.add(viewer);
-  window.resize(600, 600);
-  //window.maximize();
+  window.resize(options.WindowWidthOnStart(), options.WindowHeightOnStart());
+  if (options.MaximizeOnStart()) {
+    window.maximize();
+  }
 
   viewer.show();
 

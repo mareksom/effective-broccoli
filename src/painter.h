@@ -33,6 +33,7 @@ class Painter {
   const SurfaceBuffer* GetAndLockCurrentSurfaceBuffer();
   void ReleaseCurrentSurfaceBuffer();
 
+  void Resize(int width, int height);
   void Translate(double dx, double dy);
   void Zoom(double x, double y, double factor);
 
@@ -41,6 +42,8 @@ class Painter {
     double tx;
     double ty;
     double scale;
+    int width;
+    int height;
   };
 
   std::pair<double, double> BoardToSurfaceCoordinates(double x, double y) const;
@@ -51,7 +54,7 @@ class Painter {
   void DrawLoop();
   void ApplyTranslation(int dx, int dy);
   void ApplyZoom(int new_tx, int new_ty, double new_scale);
-  void ApplyBruteForceModification(int dx, int dy, double scale);
+  void ApplyBruteForceModification(int tx, int ty, double scale);
   void ApplyModification(const Modification* modification);
   void ProcessSomeFields();
 
@@ -61,7 +64,7 @@ class Painter {
 
   // ----------------------------- Modifications ---------------------------- //
 
-  double mod_tx_, mod_ty_, mod_scale_;
+  Modification modification_;
   ObjectUpdaterConsume<Modification> modification_updater_;
 
 
