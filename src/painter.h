@@ -50,6 +50,7 @@ class Painter {
   void UpdateCurrentSurface();
   void DrawLoop();
   void ApplyTranslation(int dx, int dy);
+  void ApplyZoom(int new_tx, int new_ty, double new_scale);
   void ApplyBruteForceModification(int dx, int dy, double scale);
   void ApplyModification(const Modification* modification);
   void ProcessAField();
@@ -74,7 +75,8 @@ class Painter {
 
   std::set<std::pair<int, int>> fields_to_draw_;
 
-  Cairo::RefPtr<Cairo::ImageSurface> main_surface_;
+  int current_main_surface_;
+  Cairo::RefPtr<Cairo::ImageSurface> main_surface_[2];
   Cairo::RefPtr<Cairo::Context> context_;
   SurfaceBuffer surface_buffers_[3];
   ObjectUpdater<SurfaceBuffer> surface_buffer_updater_;

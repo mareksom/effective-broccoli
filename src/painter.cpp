@@ -16,9 +16,14 @@ Painter::Painter(Board* board, int width, int height)
       tx_(0), ty_(0), micro_dx_(0), micro_dy_(0), scale_(100) {
   assert(width > 0);
   assert(height > 0);
-  main_surface_ = Cairo::ImageSurface::create(
-      Cairo::Format::FORMAT_RGB24, width * 2, height * 2);
-  context_ = Cairo::Context::create(main_surface_);
+  // Sets up main surfaces.
+  for (int i = 0; i < 2; i++) {
+    main_surface_[i] = Cairo::ImageSurface::create(
+        Cairo::Format::FORMAT_RGB24, width * 2, height * 2);
+  }
+  current_main_surface_ = 0;
+  context_ = Cairo::Context::create(main_surface_[current_main_surface_]);
+  // Sets up surface buffers.
   for (int i = 0; i < 3; i++) {
     surface_buffers_[i].surface = Cairo::ImageSurface::create(
         Cairo::Format::FORMAT_RGB24, width * 2, height * 2);
@@ -84,7 +89,7 @@ void Painter::SetModification() {
 
 void Painter::UpdateCurrentSurface() {
   SurfaceBuffer* surface_buffer = surface_buffer_updater_.GetFreeObject();
-  CopySurface(main_surface_, surface_buffer->surface);
+  CopySurface(main_surface_[current_main_surface_], surface_buffer->surface);
   surface_buffer->start_x = -width_ / 2.0 + micro_dx_;
   surface_buffer->start_y = -height_ / 2.0 + micro_dy_;
   surface_buffer_updater_.SetCurrentObject(surface_buffer);
@@ -112,7 +117,7 @@ void Painter::ApplyTranslation(int dx, int dy) {
   auto old_lr = SurfaceToBoardCoordinates(width_ * 2, height_ * 2);
   tx_ += dx;
   ty_ += dy;
-  ShiftSurface(main_surface_, dx, dy);
+  ShiftSurface(main_surface_[current_main_surface_], dx, dy);
   auto ul = SurfaceToBoardCoordinates(0, 0);
   auto lr = SurfaceToBoardCoordinates(width_ * 2, height_ * 2);
 
@@ -163,6 +168,36 @@ void Painter::ApplyTranslation(int dx, int dy) {
   UpdateCurrentSurface();
 }
 
+void Painter::ApplyZoom(int new_tx, int new_ty, double new_scale) {
+  const double scale_diff = new_scale - scale_;
+  const double fix_x = (tx_ * new_scale - new_tx * scale_) / scale_diff;
+  const double fix_y = (ty_ * new_scale - new_ty * scale_) / scale_diff;
+  current_main_surface_ ^= 1;
+  context_ = Cairo::Context::create(main_surface_[current_main_surface_]);
+  context_->save();
+    context_->set_source_rgb(0, 0, 0);
+    context_->paint();
+    context_->translate(fix_x, fix_y);
+    context_->scale(new_scale / scale_, new_scale / scale_);
+    context_->set_source(
+        main_surface_[current_main_surface_ ^ 1], -fix_x, -fix_y);
+    context_->paint();
+  context_->restore();
+  tx_ = new_tx;
+  ty_ = new_ty;
+  scale_ = new_scale;
+  auto upper_left = SurfaceToBoardCoordinates(0, 0);
+  auto lower_right = SurfaceToBoardCoordinates(width_ * 2, height_ * 2);
+  fields_to_draw_.clear();
+  board_->IterateFieldsInRectangle(
+      upper_left.first, upper_left.second,
+      lower_right.first, lower_right.second,
+      [this](int x, int y) -> void {
+        fields_to_draw_.emplace(x, y);
+      });
+  UpdateCurrentSurface();
+}
+
 void Painter::ApplyBruteForceModification(int tx, int ty, double scale) {
   tx_ = tx;
   ty_ = ty;
@@ -186,15 +221,20 @@ void Painter::ApplyBruteForceModification(int tx, int ty, double scale) {
 void Painter::ApplyModification(const Modification* modification) {
   const int new_tx = static_cast<int>(modification->tx);
   const int new_ty = static_cast<int>(modification->ty);
+  const double new_scale = modification->scale;
   micro_dx_ = modification->tx - new_tx;
   micro_dy_ = modification->ty - new_ty;
-  if (std::abs(scale_ - modification->scale) < 1e-9 and
+  if (std::abs(scale_ - new_scale) < 1e-9 and
       std::abs(new_tx - tx_) <= width_ * 3 / 2 and
       std::abs(new_ty - ty_) <= height_ * 3 / 2) {
     ApplyTranslation(new_tx - tx_, new_ty - ty_);
-  } else {
-    ApplyBruteForceModification(new_tx, new_ty, modification->scale);
+    return;
   }
+  if (std::abs(scale_ - new_scale) > 1e-9) {
+    ApplyZoom(new_tx, new_ty, new_scale);
+    return;
+  }
+  ApplyBruteForceModification(new_tx, new_ty, new_scale);
 }
 
 void Painter::ProcessAField() {
