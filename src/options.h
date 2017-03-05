@@ -25,6 +25,10 @@ class Options {
   double ZoomSpeed() const;
   void SetZoomSpeed(double speed);
 
+  // The color is a gray-scale color - a number in range [0, 255].
+  int NullColor() const;
+  void SetNullColor(int color);
+
  private:
   bool maximize_on_start_ = false;
   int window_width_on_start_ = 800;
@@ -36,6 +40,8 @@ class Options {
 
   double scroll_speed_ = 15.0;
   double zoom_speed_ = 1.2;
+
+  int null_color_ = 200;
 };
 
 extern Options options;

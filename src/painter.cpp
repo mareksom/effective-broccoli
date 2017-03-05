@@ -191,7 +191,9 @@ void Painter::ApplyZoom(int new_tx, int new_ty, double new_scale) {
   current_main_surface_ ^= 1;
   context_ = Cairo::Context::create(main_surface_[current_main_surface_]);
   context_->save();
-    context_->set_source_rgb(0, 0, 0);
+    context_->set_source_rgb(options.NullColor() / 255.0,
+                             options.NullColor() / 255.0,
+                             options.NullColor() / 255.0);
     context_->paint();
     context_->translate(fix_x, fix_y);
     context_->scale(new_scale / scale_, new_scale / scale_);
@@ -228,7 +230,9 @@ void Painter::ApplyBruteForceModification(int tx, int ty, double scale) {
         fields_to_draw_.emplace(x, y);
       });
   context_->save();
-    context_->set_source_rgb(0, 0, 0);
+    context_->set_source_rgb(options.NullColor() / 255.0,
+                             options.NullColor() / 255.0,
+                             options.NullColor() / 255.0);
     context_->paint();
   context_->restore();
   UpdateCurrentSurface();

@@ -55,4 +55,12 @@ void Options::SetZoomSpeed(double speed) {
   zoom_speed_ = speed;
 }
 
+int Options::NullColor() const {
+  return null_color_;
+}
+
+void Options::SetNullColor(int color) {
+  null_color_ = color;
+}
+
 Options options;
