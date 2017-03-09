@@ -1,10 +1,15 @@
 #ifndef OPTIONS_H_
 #define OPTIONS_H_
 
+class Controller;
+
 class Options {
  public:
   // Contains default options.
   Options();
+
+  Controller* controller();
+  void SetController(Controller* controller);
 
   bool MaximizeOnStart() const;
   void SetMaximizeOnStart(bool maximize);
@@ -26,10 +31,13 @@ class Options {
   void SetZoomSpeed(double speed);
 
   // The color is a gray-scale color - a number in range [0, 255].
+  // This color indicates fields that haven't been drawn yet.
   int NullColor() const;
   void SetNullColor(int color);
 
  private:
+  Controller* controller_ = nullptr;
+
   bool maximize_on_start_ = false;
   int window_width_on_start_ = 800;
   int window_height_on_start_ = 600;

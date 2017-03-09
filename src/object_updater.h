@@ -42,7 +42,6 @@ const T* ObjectUpdater<T>::LockCurrentObject() {
   assert(locked_current_object_ == nullptr);
   locked_current_object_ = current_object_.exchange(nullptr);
   assert(locked_current_object_ != nullptr);
-  debug() << "Lock: " << locked_current_object_;
   return locked_current_object_;
 }
 
@@ -57,7 +56,6 @@ void ObjectUpdater<T>::ReleaseCurrentObject() {
     locked_current_object_ = return_bucket_.exchange(locked_current_object_);
     assert(locked_current_object_ == nullptr);
   }
-  debug() << "Released";
 }
 
 template <typename T>
@@ -65,19 +63,16 @@ T* ObjectUpdater<T>::GetFreeObject() {
   assert(!free_objects_.empty());
   T* free_object_ = free_objects_.back();
   free_objects_.pop_back();
-  debug() << "GetFreeObject() = " << free_object_;
   return free_object_;
 }
 
 template <typename T>
 void ObjectUpdater<T>::AddObject(T* object) {
-  debug() << "AddObject(" << object << ")";
   free_objects_.push_back(object);
 }
 
 template <typename T>
 void ObjectUpdater<T>::SetCurrentObject(T* object) {
-  debug() << "SetCurrentObject(" << object << ")";
   T* returned_object = return_bucket_.exchange(nullptr);
   if (returned_object != nullptr) {
     AddObject(returned_object);

@@ -4,7 +4,7 @@
 
 CXX = g++
 CXXFLAGS = -std=c++14
-CXXLDFLAGS = -pthread
+CXXLDFLAGS = -pthread -lpng
 CXXFLAGS_DEBUG = -g -O0
 CXXFLAGS_RELEASE = -DNDEBUG -O2
 

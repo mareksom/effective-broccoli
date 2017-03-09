@@ -2,6 +2,14 @@
 
 Options::Options() {}
 
+Controller* Options::controller() {
+  return controller_;
+}
+
+void Options::SetController(Controller* controller) {
+  controller_ = controller;
+}
+
 bool Options::MaximizeOnStart() const {
   return maximize_on_start_;
 }

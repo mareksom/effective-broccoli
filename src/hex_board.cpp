@@ -2,6 +2,10 @@
 
 #include <string>
 
+#include "controller.h"
+#include "object.h"
+#include "options.h"
+
 namespace {
 
 constexpr double sin_pi_div_6 = 0.5;
@@ -48,15 +52,22 @@ void HexBoard::IterateFieldsInRectangle(
   const int ry = static_cast<int>(std::floor(y_min / rectangle_height));
   const int rx2 = static_cast<int>(std::floor(x_max / rectangle_width));
   const int ry2 = static_cast<int>(std::floor(y_max / rectangle_height));
+  const int width = options.controller()->BoardWidth();
+  const int height = options.controller()->BoardHeight();
   for (int x = rx; x <= rx2; x++) {
     for (int y = ry; y <= ry2 + 1; y++) {
-      callback((x - y + ((x + y) % 2 + 2) % 2) / 2, y);
+      if (0 <= x and x < width) {
+        if (0 <= y and y < height) {
+          callback((x - y + ((x + y) % 2 + 2) % 2) / 2, y);
+        }
+      }
     }
   }
 }
 
 void HexBoard::DrawField(
     int x, int y, const Cairo::RefPtr<Cairo::Context>& context) const {
+  const int color = options.controller()->GetFieldColor(x, y);
   context->save();
     context->translate((2 * x + y) * sin_pi_div_3, y * (sin_pi_div_6 + 1));
     context->move_to(0, -1);
@@ -66,7 +77,9 @@ void HexBoard::DrawField(
     context->line_to(-sin_pi_div_3, sin_pi_div_6);
     context->line_to(-sin_pi_div_3, -sin_pi_div_6);
     context->close_path();
-    context->set_source_rgb(1, 1, 1);
+    context->clip_preserve();
+    context->set_source_rgb(
+        GetDoubleR(color), GetDoubleG(color), GetDoubleB(color));
     context->fill_preserve();
     context->set_source_rgb(0, 0, 0);
     context->set_line_width(0.01);
@@ -76,5 +89,10 @@ void HexBoard::DrawField(
     context->set_font_size(0.25);
     context->show_text(
         "(" + std::to_string(x) + ", " + std::to_string(y) + ")");
+    // Object.
+    context->save();
+      context->scale(0.8, 0.8);
+      DrawObject(context, options.controller()->GetObject(x, y));
+    context->restore();
   context->restore();
 }

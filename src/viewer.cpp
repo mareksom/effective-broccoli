@@ -29,7 +29,6 @@ bool Viewer::on_draw(const Cairo::RefPtr<Cairo::Context>& context) {
   context->save();
     context->set_source(surface_buffer->surface,
                         surface_buffer->start_x, surface_buffer->start_y);
-    debug() << imie(surface_buffer->start_x) << imie(surface_buffer->start_y);
     context->paint();
   context->restore();
   painter_->ReleaseCurrentSurfaceBuffer();

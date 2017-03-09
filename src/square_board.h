@@ -13,8 +13,6 @@ class SquareBoard : public Board {
 
   void DrawField(int x, int y,
                  const Cairo::RefPtr<Cairo::Context>& context) const override;
-
- private:
 };
 
 #endif  // SQUARE_BOARD_H_
