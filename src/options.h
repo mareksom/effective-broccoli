@@ -8,7 +8,7 @@ class Options {
   // Contains default options.
   Options();
 
-  Controller* controller();
+  Controller* controller() const;
   void SetController(Controller* controller);
 
   bool MaximizeOnStart() const;
@@ -51,7 +51,5 @@ class Options {
 
   int null_color_ = 200;
 };
-
-extern Options options;
 
 #endif  // OPTIONS_H_

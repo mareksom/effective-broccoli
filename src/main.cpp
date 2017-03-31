@@ -5,6 +5,8 @@ namespace gil = boost::gil;
 
 #include <gtkmm/application.h>
 #include <gtkmm/window.h>
+#include <iostream>
+#include <string>
 #include <thread>
 
 #include "controller.h"
@@ -13,6 +15,7 @@ namespace gil = boost::gil;
 #include "object.h"
 #include "options.h"
 #include "painter.h"
+#include "run.h"
 #include "square_board.h"
 #include "viewer.h"
 
@@ -25,7 +28,7 @@ struct Contr : Controller {
   }
 
   int BoardWidth() override {
-    return input.width() * 4;
+    return input.width();
   }
 
   int BoardHeight() override {
@@ -45,39 +48,55 @@ struct Contr : Controller {
     const int b = rand() % 256;
     return MakeObject(static_cast<Object>(wybor), r, g, b);
   }
+
+  void FieldClick(int x, int y, int button) override {
+    if (button == 1) {
+      debug() << "Lewy" << imie(x) << imie(y);
+    } else if (button == 2) {
+      debug() << "Srodkowy" << imie(x) << imie(y);
+    } else if (button == 3) {
+      debug() << "Prawy" << imie(x) << imie(y);
+    } else {
+      debug() << "Dziwny" << imie(x) << imie(y);
+    }
+  }
+
+  void KeyPress(const std::string& button) override {
+    debug() << "KeyPress(" << imie(button) << ")";
+  }
 } controller;
 
 int main(int argc, char** argv) {
   controller.Init();
 
+  Options options;
   options.SetController(&controller);
 
-  Glib::RefPtr<Gtk::Application> application =
-      Gtk::Application::create(argc, argv);
-  Gtk::Window window;
+  std::string board_type;
+  while (board_type.empty()) {
+    std::cout << "Select the type of the board: [square/hex]:" << std::endl;
+    std::cin >> board_type;
+    if (!board_type.empty()) {
+      if (board_type[0] == 's' or board_type[0] == 'S') {
+        board_type = "square";
+      } else if (board_type[0] == 'h' or board_type[0] == 'H') {
+        board_type = "hex";
+      } else {
+        std::cout << "Unrecognized type: '" << board_type << "'." << std::endl;
+        board_type.clear();
+        continue;
+      }
+      break;
+    }
+  }
 
   std::unique_ptr<Board> board;
-  char buf[10];
-  scanf("%s", buf);
-  if (buf[0] == 's') {
+  if (board_type == "square") {
     board = std::make_unique<SquareBoard>();
-  } else {
+  } else if (board_type == "hex") {
     board = std::make_unique<HexBoard>();
+  } else {
+    assert(false);
   }
-
-  Painter painter(
-    board.get(), options.WindowWidthOnStart(), options.WindowHeightOnStart());
-  Viewer viewer(&painter);
-  painter.SetViewer(&viewer);
-  painter.Start();
-
-  window.add(viewer);
-  window.resize(options.WindowWidthOnStart(), options.WindowHeightOnStart());
-  if (options.MaximizeOnStart()) {
-    window.maximize();
-  }
-
-  viewer.show();
-
-  return application->run(window);
+  return RunBoard(argc, argv, options, std::move(board));
 }

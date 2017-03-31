@@ -7,9 +7,15 @@
 #include <tuple>
 #include <utility>
 
+#include "options.h"
+
 class Board {
  public:
+  Board();
+
   virtual ~Board() = default;
+
+  void SetOptions(const Options* options);
 
   virtual std::pair<int, int> PointToCoordinates(double x, double y) const = 0;
 
@@ -19,6 +25,11 @@ class Board {
 
   virtual void DrawField(
       int x, int y, const Cairo::RefPtr<Cairo::Context>& context) const = 0;
+
+  const Options& options() const;
+
+ private:
+  const Options* options_;
 };
 
 #endif  // BOARD_H_

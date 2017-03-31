@@ -1,20 +1,16 @@
 #ifndef PAINTER_H_
 #define PAINTER_H_
 
-#include <atomic>
 #include <cairomm/context.h>
 #include <cairomm/surface.h>
-#include <condition_variable>
-#include <mutex>
-#include <queue>
 #include <set>
-#include <thread>
-#include <tuple>
+#include <utility>
 
 #include "object_updater.h"
 #include "object_updater_consume.h"
 
 class Board;
+class Options;
 class Viewer;
 
 class Painter {
@@ -25,7 +21,7 @@ class Painter {
     double start_y;
   };
 
-  Painter(Board* board, int width, int height);
+  Painter(const Options* options, Board* board, int width, int height);
 
   void SetViewer(Viewer* viewer);
   void Start();
@@ -37,7 +33,11 @@ class Painter {
   void Translate(double dx, double dy);
   void Zoom(double x, double y, double factor);
 
+  std::pair<int, int> WindowToBoardCoordinates(double x, double y) const;
+
  private:
+  const Options& options() const;
+
   struct Modification {
     double tx;
     double ty;
@@ -58,6 +58,7 @@ class Painter {
   void ApplyModification(const Modification* modification);
   void ProcessSomeFields();
 
+  const Options* options_;
   Board* board_;
   Viewer* viewer_;
 

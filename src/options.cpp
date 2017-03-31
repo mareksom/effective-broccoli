@@ -2,7 +2,7 @@
 
 Options::Options() {}
 
-Controller* Options::controller() {
+Controller* Options::controller() const {
   return controller_;
 }
 
@@ -70,5 +70,3 @@ int Options::NullColor() const {
 void Options::SetNullColor(int color) {
   null_color_ = color;
 }
-
-Options options;

@@ -1,5 +1,6 @@
 #include "hex_board.h"
 
+#include <cassert>
 #include <string>
 
 #include "controller.h"
@@ -52,14 +53,15 @@ void HexBoard::IterateFieldsInRectangle(
   const int ry = static_cast<int>(std::floor(y_min / rectangle_height));
   const int rx2 = static_cast<int>(std::floor(x_max / rectangle_width));
   const int ry2 = static_cast<int>(std::floor(y_max / rectangle_height));
-  const int width = options.controller()->BoardWidth();
-  const int height = options.controller()->BoardHeight();
-  for (int x = rx; x <= rx2; x++) {
-    for (int y = ry; y <= ry2 + 1; y++) {
-      if (0 <= x and x < width) {
-        if (0 <= y and y < height) {
-          callback((x - y + ((x + y) % 2 + 2) % 2) / 2, y);
-        }
+  const int width = options().controller()->BoardWidth();
+  const int height = options().controller()->BoardHeight();
+  for (int y = std::max(ry, 0); y <= ry2 + 1 and y < height; y++) {
+    for (int x = std::max(rx, y - 1); x <= rx2 and x < 2 * width + y - 1; x++) {
+      const int actual_x = (x - y + ((x + y) % 2 + 2) % 2) / 2;
+      const int actual_y = y;
+      assert(0 <= actual_y and actual_y < height);
+      if (0 <= actual_x and actual_x < width) {
+        callback(actual_x, actual_y);
       }
     }
   }
@@ -67,7 +69,7 @@ void HexBoard::IterateFieldsInRectangle(
 
 void HexBoard::DrawField(
     int x, int y, const Cairo::RefPtr<Cairo::Context>& context) const {
-  const int color = options.controller()->GetFieldColor(x, y);
+  const int color = options().controller()->GetFieldColor(x, y);
   context->save();
     context->translate((2 * x + y) * sin_pi_div_3, y * (sin_pi_div_6 + 1));
     context->move_to(0, -1);
@@ -84,15 +86,10 @@ void HexBoard::DrawField(
     context->set_source_rgb(0, 0, 0);
     context->set_line_width(0.01);
     context->stroke();
-    // Text.
-    context->move_to(-sin_pi_div_3, 0);
-    context->set_font_size(0.25);
-    context->show_text(
-        "(" + std::to_string(x) + ", " + std::to_string(y) + ")");
     // Object.
     context->save();
       context->scale(0.8, 0.8);
-      DrawObject(context, options.controller()->GetObject(x, y));
+      DrawObject(context, options().controller()->GetObject(x, y));
     context->restore();
   context->restore();
 }

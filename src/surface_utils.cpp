@@ -21,8 +21,9 @@ void CopySurface(const Cairo::RefPtr<Cairo::ImageSurface>& src,
   dst->mark_dirty();
 }
 
-void ShiftSurface(
-    const Cairo::RefPtr<Cairo::ImageSurface>& surface, int dx, int dy) {
+void ShiftSurface(const Options& options,
+                  const Cairo::RefPtr<Cairo::ImageSurface>& surface,
+                  int dx, int dy) {
   const int width = surface->get_width();
   const int height = surface->get_height();
   const int stride = surface->get_stride();

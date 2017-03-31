@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <chrono>
+#include <thread>
 
 #include "board.h"
 #include "makra.h"
@@ -9,9 +10,9 @@
 #include "surface_utils.h"
 #include "viewer.h"
 
-Painter::Painter(Board* board, int width, int height)
-    : board_(board), viewer_(nullptr),
-      modification_{width / 2.0, height / 2.0, options.InitialScale(),
+Painter::Painter(const Options* options, Board* board, int width, int height)
+    : options_(options), board_(board), viewer_(nullptr),
+      modification_{width / 2.0, height / 2.0, options->InitialScale(),
                     width, height},
       // Values: @width_, @height_, @tx_, @ty_, @micro_dx_, @micro_dy_, @scale_
       // will be initialized after first modification.
@@ -82,6 +83,19 @@ void Painter::Zoom(double x, double y, double factor) {
   SetModification();
 }
 
+std::pair<int, int> Painter::WindowToBoardCoordinates(double x,
+                                                      double y) const {
+  const double board_x =
+      (x + modification_.width / 2.0 - modification_.tx) / modification_.scale;
+  const double board_y =
+      (y + modification_.height / 2.0 - modification_.ty) / modification_.scale;
+  return board_->PointToCoordinates(board_x, board_y);
+}
+
+const Options& Painter::options() const {
+  return *options_;
+}
+
 std::pair<double, double> Painter::BoardToSurfaceCoordinates(
     double x, double y) const {
   return std::make_pair(x * scale_ + tx_, y * scale_ + ty_);
@@ -133,7 +147,7 @@ void Painter::ApplyTranslation(int dx, int dy) {
   auto old_lr = SurfaceToBoardCoordinates(width_ * 2, height_ * 2);
   tx_ += dx;
   ty_ += dy;
-  ShiftSurface(main_surface_[current_main_surface_], dx, dy);
+  ShiftSurface(options(), main_surface_[current_main_surface_], dx, dy);
   auto ul = SurfaceToBoardCoordinates(0, 0);
   auto lr = SurfaceToBoardCoordinates(width_ * 2, height_ * 2);
 
@@ -191,9 +205,9 @@ void Painter::ApplyZoom(int new_tx, int new_ty, double new_scale) {
   current_main_surface_ ^= 1;
   context_ = Cairo::Context::create(main_surface_[current_main_surface_]);
   context_->save();
-    context_->set_source_rgb(options.NullColor() / 255.0,
-                             options.NullColor() / 255.0,
-                             options.NullColor() / 255.0);
+    context_->set_source_rgb(options().NullColor() / 255.0,
+                             options().NullColor() / 255.0,
+                             options().NullColor() / 255.0);
     context_->paint();
     context_->translate(fix_x, fix_y);
     context_->scale(new_scale / scale_, new_scale / scale_);
@@ -230,9 +244,9 @@ void Painter::ApplyBruteForceModification(int tx, int ty, double scale) {
         fields_to_draw_.emplace(x, y);
       });
   context_->save();
-    context_->set_source_rgb(options.NullColor() / 255.0,
-                             options.NullColor() / 255.0,
-                             options.NullColor() / 255.0);
+    context_->set_source_rgb(options().NullColor() / 255.0,
+                             options().NullColor() / 255.0,
+                             options().NullColor() / 255.0);
     context_->paint();
   context_->restore();
   UpdateCurrentSurface();
@@ -269,7 +283,7 @@ void Painter::ApplyModification(const Modification* modification) {
 
 void Painter::ProcessSomeFields() {
   if (fields_to_draw_.empty()) return;
-  int cnt = options.NumberOfFieldsProcessedPerFrame();
+  int cnt = options().NumberOfFieldsProcessedPerFrame();
   while (!fields_to_draw_.empty() and cnt-- > 0) {
     auto it = fields_to_draw_.begin();
     const int x = it->first;
