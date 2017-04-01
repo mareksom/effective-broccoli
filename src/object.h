@@ -14,10 +14,11 @@ enum class Object : int {
   kFlag      = 6,
   kPentagram = 7,
   kSmile     = 8,
-  kCoin     = 9,
+  kSad       = 9,
+  kCoin      = 10,
 
   // Not actually an object.
-  kCount = 10,
+  kCount = 11,
 };
 
 int MakeObject(Object object, int r, int g, int b);

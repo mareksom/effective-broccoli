@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "board.h"
+#include "controller.h"
 #include "options.h"
 
 int RunBoard(int argc, char** argv,

@@ -11,6 +11,10 @@ CXXFLAGS_RELEASE = -DNDEBUG -O2
 BIN = bin
 EXE = run.e
 SRC = src
+SAMPLE_DIR = sample
+
+HEADERS_DIR = $(BIN)/grid
+OBJECT = $(HEADERS_DIR)/grid.o
 
 
 ################################################################################
@@ -79,7 +83,7 @@ CXXLDFLAGS += $(GTKMM_LINK_OPTIONS)
 ################################################################################
 
 # Default target.
-all: $(BIN)/$(EXE)
+all: all_things
 
 # Debug mode.
 DEBUG ?= 1
@@ -117,10 +121,21 @@ OBJS = $(addprefix $(BIN)/, $(addsuffix .o, $(SRC_SOURCES)))
 ################################### Linking ####################################
 ################################################################################
 
-# Links all object files into the final executable.
-$(BIN)/$(EXE): $(OBJS)
+# Creates the global object file.
+$(OBJECT): $(OBJS)
 	@mkdir -p $(dir $@)
-	$(CXX) $^ -o $@ $(CXXLDFLAGS)
+	ld -r $(OBJS) -o $@
+
+
+################################################################################
+################################ Copying headers ###############################
+################################################################################
+
+COPIED_HEADERS = $(addprefix $(HEADERS_DIR)/, $(SRC_HEADERS))
+
+$(COPIED_HEADERS): $(HEADERS_DIR)/%: %
+	@mkdir -p $(dir $@)
+	cp $^ $@
 
 
 ################################################################################
@@ -130,3 +145,28 @@ $(BIN)/$(EXE): $(OBJS)
 .PHONY: clean
 clean:
 	rm -rf $(BIN)
+
+
+################################################################################
+#################################### Sample ####################################
+################################################################################
+
+SAMPLE_MAIN = $(SAMPLE_DIR)/main.cpp
+SAMPLE_BIN = $(BIN)/$(SAMPLE_DIR)/bin
+SAMPLE_MAIN_OBJ = $(SAMPLE_BIN)/main.o
+
+$(SAMPLE_MAIN_OBJ): $(SAMPLE_MAIN) $(COPIED_HEADERS)
+	@mkdir -p $(dir $@)
+	$(CXX) $(SAMPLE_MAIN) -c -o $@ $(CXXFLAGS) -I$(BIN)
+
+# Links all object files into the final executable.
+$(BIN)/$(EXE): $(OBJECT) $(SAMPLE_MAIN_OBJ)
+	@mkdir -p $(dir $@)
+	$(CXX) $^ -o $@ $(CXXLDFLAGS)
+
+
+################################################################################
+################################## All things ##################################
+################################################################################
+
+all_things: $(OBJECT) $(BIN)/$(EXE) $(COPIED_HEADERS)

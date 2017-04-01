@@ -15,7 +15,7 @@ class ObjectUpdaterConsume {
 
   // If @block == false, returns nullptr when no object is available.
   // If @block == true, never return nullptr.
-  const T* LockCurrentObject(bool block);
+  T* LockCurrentObject(bool block);
 
   // No need for releasing when @LockCurrentObject returned nullptr.
   void ReleaseCurrentObject();
@@ -53,7 +53,7 @@ ObjectUpdaterConsume<T>::ObjectUpdaterConsume()
 }
 
 template <typename T>
-const T* ObjectUpdaterConsume<T>::LockCurrentObject(bool block) {
+T* ObjectUpdaterConsume<T>::LockCurrentObject(bool block) {
   assert(locked_current_object_ == nullptr);
   if (block) {
     std::unique_lock<std::mutex> lock(mutex_);

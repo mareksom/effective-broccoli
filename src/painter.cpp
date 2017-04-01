@@ -5,6 +5,7 @@
 #include <thread>
 
 #include "board.h"
+#include "controller.h"
 #include "makra.h"
 #include "options.h"
 #include "surface_utils.h"
@@ -61,6 +62,7 @@ void Painter::ReleaseCurrentSurfaceBuffer() {
 }
 
 void Painter::Resize(int width, int height) {
+  std::lock_guard<std::mutex> lock(update_mutex_);
   modification_.tx -= (modification_.width - width) / 2.0;
   modification_.ty -= (modification_.height - height) / 2.0;
   modification_.width = width;
@@ -69,17 +71,34 @@ void Painter::Resize(int width, int height) {
 }
 
 void Painter::Translate(double dx, double dy) {
+  std::lock_guard<std::mutex> lock(update_mutex_);
   modification_.tx += dx;
   modification_.ty += dy;
   SetModification();
 }
 
 void Painter::Zoom(double x, double y, double factor) {
+  std::lock_guard<std::mutex> lock(update_mutex_);
   x += modification_.width / 2.0;
   y += modification_.height / 2.0;
   modification_.tx = x + (modification_.tx - x) * factor;
   modification_.ty = y + (modification_.ty - y) * factor;
   modification_.scale *= factor;
+  SetModification();
+}
+
+void Painter::InvalidateField(int x, int y) {
+  std::lock_guard<std::mutex> lock(update_mutex_);
+  task_queue_.Append([this, x, y]() -> void {
+                       fields_to_draw_.emplace(x, y);
+                     });
+}
+
+void Painter::CenterOn(int x, int y) {
+  std::lock_guard<std::mutex> lock(update_mutex_);
+  const std::pair<double, double> center = board_->CenterOfField(x, y);
+  modification_.tx = modification_.width - center.first * modification_.scale;
+  modification_.ty = modification_.height - center.second * modification_.scale;
   SetModification();
 }
 
@@ -107,9 +126,9 @@ std::pair<double, double> Painter::SurfaceToBoardCoordinates(
 }
 
 void Painter::SetModification() {
-  Modification* modification = modification_updater_.GetFreeObject();
-  *modification = modification_;
-  modification_updater_.SetCurrentObject(modification);
+  task_queue_.Append([this, modification = modification_]() -> void {
+                       ApplyModification(&modification);
+                     });
 }
 
 void Painter::UpdateCurrentSurface() {
@@ -128,14 +147,14 @@ void Painter::UpdateCurrentSurface() {
 
 void Painter::DrawLoop() {
   while (true) {
-    const Modification* mod =
-        modification_updater_.LockCurrentObject(false /* Don't block. */);
-    if (mod == nullptr and fields_to_draw_.empty()) {
-      mod = modification_updater_.LockCurrentObject(true /* Do block. */);
+    std::function<void()> task;
+    bool has_task = task_queue_.Consume(task);
+    if (!has_task and fields_to_draw_.empty()) {
+      has_task = true;
+      task_queue_.ConsumeBlock(task);
     }
-    if (mod != nullptr) {
-      ApplyModification(mod);
-      modification_updater_.ReleaseCurrentObject();
+    if (has_task) {
+      task();
     } else {
       ProcessSomeFields();
     }
@@ -283,17 +302,21 @@ void Painter::ApplyModification(const Modification* modification) {
 
 void Painter::ProcessSomeFields() {
   if (fields_to_draw_.empty()) return;
+  const int board_width = options().controller()->BoardWidth();
+  const int board_height = options().controller()->BoardHeight();
   int cnt = options().NumberOfFieldsProcessedPerFrame();
   while (!fields_to_draw_.empty() and cnt-- > 0) {
     auto it = fields_to_draw_.begin();
     const int x = it->first;
     const int y = it->second;
     fields_to_draw_.erase(it);
-    context_->save();
-      context_->translate(tx_, ty_);
-      context_->scale(scale_, scale_);
-      board_->DrawField(x, y, context_);
-    context_->restore();
+    if (0 <= x and x < board_width and 0 <= y and y < board_height) {
+      context_->save();
+        context_->translate(tx_, ty_);
+        context_->scale(scale_, scale_);
+        board_->DrawField(x, y, context_);
+      context_->restore();
+    }
   }
   UpdateCurrentSurface();
 }

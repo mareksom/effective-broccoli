@@ -9,10 +9,13 @@
 #include "object.h"
 #include "options.h"
 
-std::pair<int, int> SquareBoard::PointToCoordinates(
-    double x, double y) const {
+std::pair<int, int> SquareBoard::PointToCoordinates(double x, double y) const {
   return std::make_pair(static_cast<int>(std::floor(x)),
                         static_cast<int>(std::floor(y)));
+}
+
+std::pair<double, double> SquareBoard::CenterOfField(int x, int y) const {
+  return std::make_pair(x + 0.5, y + 0.5);
 }
 
 void SquareBoard::IterateFieldsInRectangle(

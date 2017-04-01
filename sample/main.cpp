@@ -1,52 +1,55 @@
-#include <boost/gil/extension/io/png_dynamic_io.hpp>
-#include <boost/gil/gil_all.hpp>
-
-namespace gil = boost::gil;
-
-#include <gtkmm/application.h>
-#include <gtkmm/window.h>
 #include <iostream>
+#include <mutex>
 #include <string>
 #include <thread>
 
-#include "controller.h"
-#include "hex_board.h"
-#include "makra.h"
-#include "object.h"
-#include "options.h"
-#include "painter.h"
-#include "run.h"
-#include "square_board.h"
-#include "viewer.h"
+#include "grid/src/controller.h"
+#include "grid/src/hex_board.h"
+#include "grid/src/makra.h"
+#include "grid/src/object.h"
+#include "grid/src/options.h"
+#include "grid/src/painter.h"
+#include "grid/src/run.h"
+#include "grid/src/square_board.h"
+#include "grid/src/viewer.h"
+
+std::mutex position_mutex;
+int px, py;
 
 struct Contr : Controller {
-  gil::rgb8_image_t input;
-
   void Init() {
-    gil::png_read_and_convert_image("obrazek.png", input);
-    debug() << imie(BoardWidth()) << imie(BoardHeight());
   }
 
   int BoardWidth() override {
-    return input.width();
+    return 100;
   }
 
   int BoardHeight() override {
-    return input.height();
+    return 100;
   }
 
   int GetFieldColor(int x, int y) override {
-    gil::rgb8_pixel_t pixel = view(input)(x, y);
-    return MakeColor(pixel[0], pixel[1], pixel[2]);
+    srand((50 * 1000 * x + y) ^ 0xfffff);
+    const int r = rand() % 256;
+    const int g = rand() % 256;
+    const int b = rand() % 256;
+    return MakeColor(r, g, b);
   }
 
   int GetObject(int x, int y) override {
     srand(50 * 1000 * x + y);
-    const int wybor = rand() % static_cast<int>(Object::kCount);
     const int r = rand() % 256;
     const int g = rand() % 256;
     const int b = rand() % 256;
-    return MakeObject(static_cast<Object>(wybor), r, g, b);
+    position_mutex.lock();
+    const int dx = px;
+    const int dy = py;
+    position_mutex.unlock();
+    if (x == dx and y == dy) {
+      return MakeObject(Object::kSad, r, g, b);
+    } else {
+      return MakeObject(Object::kNone, r, g, b);
+    }
   }
 
   void FieldClick(int x, int y, int button) override {
@@ -62,7 +65,36 @@ struct Contr : Controller {
   }
 
   void KeyPress(const std::string& button) override {
-    debug() << "KeyPress(" << imie(button) << ")";
+    int dx = 0, dy = 0;
+    if (button == "left") {
+      dx = -1;
+    } else if (button == "right") {
+      dx = 1;
+    } else if (button == "up") {
+      dy = -1;
+    } else if (button == "down") {
+      dy = 1;
+    } else {
+      debug() << "KeyPress(" << imie(button) << ")";
+    }
+    if (dx != 0 or dy != 0) {
+      position_mutex.lock();
+      const int old_x = px;
+      const int old_y = py;
+      const int new_x = old_x + dx;
+      const int new_y = old_y + dy;
+      if (0 <= new_x and new_x < BoardWidth() and
+          0 <= new_y and new_y < BoardHeight()) {
+        px = new_x;
+        py = new_y;
+        position_mutex.unlock();
+        InvalidateField(old_x, old_y);
+        InvalidateField(new_x, new_y);
+        CenterOn(new_x, new_y);
+      } else {
+        position_mutex.unlock();
+      }
+    }
   }
 } controller;
 

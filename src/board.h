@@ -19,6 +19,8 @@ class Board {
 
   virtual std::pair<int, int> PointToCoordinates(double x, double y) const = 0;
 
+  virtual std::pair<double, double> CenterOfField(int x, int y) const = 0;
+
   virtual void IterateFieldsInRectangle(
       double x_min, double y_min, double x_max, double y_max,
       std::function<void(int, int)> callback) const = 0;

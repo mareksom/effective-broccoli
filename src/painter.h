@@ -3,11 +3,12 @@
 
 #include <cairomm/context.h>
 #include <cairomm/surface.h>
+#include <mutex>
 #include <set>
 #include <utility>
 
+#include "lock_free_queue.h"
 #include "object_updater.h"
-#include "object_updater_consume.h"
 
 class Board;
 class Options;
@@ -33,6 +34,9 @@ class Painter {
   void Translate(double dx, double dy);
   void Zoom(double x, double y, double factor);
 
+  void InvalidateField(int x, int y);
+  void CenterOn(int x, int y);
+
   std::pair<int, int> WindowToBoardCoordinates(double x, double y) const;
 
  private:
@@ -49,6 +53,7 @@ class Painter {
   std::pair<double, double> BoardToSurfaceCoordinates(double x, double y) const;
   std::pair<double, double> SurfaceToBoardCoordinates(double x, double y) const;
 
+  // @SetModification() requires @update_mutex_ being locked.
   void SetModification();
   void UpdateCurrentSurface();
   void DrawLoop();
@@ -63,10 +68,11 @@ class Painter {
   Viewer* viewer_;
 
 
-  // ----------------------------- Modifications ---------------------------- //
+  // --------------------------------- Tasks -------------------------------- //
 
+  std::mutex update_mutex_;
   Modification modification_;
-  ObjectUpdaterConsume<Modification> modification_updater_;
+  LockFreeQueue<std::function<void()>, 50> task_queue_;
 
 
   // -------------------------------- Drawing ------------------------------- //

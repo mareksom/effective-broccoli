@@ -188,6 +188,22 @@ void Smile(const Cairo::RefPtr<Cairo::Context>& context) {
   context->stroke();
 }
 
+void Sad(const Cairo::RefPtr<Cairo::Context>& context) {
+  context->paint();
+  context->set_source_rgb(0, 0, 0);
+  context->set_line_cap(Cairo::LineCap::LINE_CAP_ROUND);
+  context->set_line_width(kBorderWidth / 2);
+  context->arc(0, 0.6, 0.5, -M_PI * 7 / 8, -M_PI / 8);
+  context->stroke();
+  context->arc(0.3, -0.3, kBorderWidth / 2, 0, 2 * M_PI);
+  context->fill();
+  context->arc(-0.3, -0.3, kBorderWidth / 2, 0, 2 * M_PI);
+  context->fill();
+  context->set_line_width(kBorderWidth);
+  context->arc(0, 0, 1, 0, 2 * M_PI);
+  context->stroke();
+}
+
 void Coin(const Cairo::RefPtr<Cairo::Context>& context) {
   context->scale(1, -1);
   context->paint();
@@ -224,6 +240,7 @@ std::array<void(*)(const Cairo::RefPtr<Cairo::Context>&),
       Flag,
       Pentagram,
       Smile,
+      Sad,
       Coin,
     };
 

@@ -2,6 +2,8 @@
 #define LOCK_FREE_QUEUE_H_
 
 #include <atomic>
+#include <condition_variable>
+#include <mutex>
 
 // A queue that uses only a single atomic variable.  It is faster than a normal
 // queue protected with a mutex.  However, it can only be used between two
@@ -15,9 +17,14 @@ class LockFreeQueue {
   // --------------------------- READER FUNCTIONS --------------------------- //
 
   // When the queue is empty, returns false.  Otherwise, sets @t to the first
-  // element of the queue and return true.  The first element is consumed
-  // (i.e. it will not be returned with the next call to @Consume()).
+  // element of the queue and returns true.  The first element is consumed
+  // (i.e. it will not be returned with the next call to @Consume*()).
   bool Consume(T& t);
+
+  // When the queue is empty, blocks.  Otherwise, sets @t to the first element
+  // of the queue and returns true.  The first element is consumed
+  // (i.e. it will not be returned with the next call to @Consume*()).
+  void ConsumeBlock(T& t);
 
   // Returns true when the queue is empty.
   bool IsEmpty();
@@ -30,6 +37,9 @@ class LockFreeQueue {
   void Append(T t);
 
  private:
+  std::mutex mutex_;
+  std::condition_variable cond_var_;
+
   int begin_;
   int end_;
   std::atomic<int> length_;
@@ -58,6 +68,21 @@ bool LockFreeQueue<T, Size>::Consume(T& t) {
 }
 
 template <typename T, int Size>
+void LockFreeQueue<T, Size>::ConsumeBlock(T& t) {
+  if (length_.load() == 0) {
+    std::unique_lock<std::mutex> lock(mutex_);
+    cond_var_.wait(lock, [this]() -> bool {
+                          return length_.load() != 0;
+                        });
+  }
+  t = array_[begin_];
+  if (++begin_ == Size) {
+    begin_ = 0;
+  }
+  length_.fetch_sub(1);
+}
+
+template <typename T, int Size>
 bool LockFreeQueue<T, Size>::IsEmpty() {
   return length_.load() > 0;
 }
@@ -72,6 +97,7 @@ void LockFreeQueue<T, Size>::Append(T t) {
     end_ = 0;
   }
   length_.fetch_add(1);
+  cond_var_.notify_one();
 }
 
 #endif  // LOCK_FREE_QUEUE_H_

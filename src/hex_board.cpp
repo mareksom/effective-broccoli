@@ -46,6 +46,10 @@ std::pair<int, int> HexBoard::PointToCoordinates(double x, double y) const {
   return std::make_pair(rx, ry);
 }
 
+std::pair<double, double> HexBoard::CenterOfField(int x, int y) const {
+  return std::make_pair((2 * x + y) * rectangle_width, y * rectangle_height);
+}
+
 void HexBoard::IterateFieldsInRectangle(
     double x_min, double y_min, double x_max, double y_max,
     std::function<void(int, int)> callback) const {
