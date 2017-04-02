@@ -18,6 +18,18 @@ int px, py;
 
 struct Contr : Controller {
   void Init() {
+    AddSingleMessageBox(
+        1, 0, 0, 1,
+        [&](StreamReader& sr) -> void {
+          std::lock_guard<std::mutex> lock(position_mutex);
+          sr << "Position: (" << px << ", " << py << ")";
+        });
+    AddSingleMessageBox(
+        1, 1, 1, 1,
+        [&](StreamReader& sr) -> void {
+          std::lock_guard<std::mutex> lock(position_mutex);
+          sr << rand() << " <- random value";
+        });
   }
 
   int BoardWidth() override {
@@ -91,6 +103,7 @@ struct Contr : Controller {
         InvalidateField(old_x, old_y);
         InvalidateField(new_x, new_y);
         CenterOn(new_x, new_y);
+        AddMessage() << "Centering on: (" << new_x << ", " << new_y << ") \n  |----> Wciecie\n  `-----> Drugie.";
       } else {
         position_mutex.unlock();
       }

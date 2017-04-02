@@ -27,6 +27,8 @@ void Viewer::Redraw() {
 }
 
 bool Viewer::on_draw(const Cairo::RefPtr<Cairo::Context>& context) {
+  const int width = get_allocated_width();
+  const int height = get_allocated_height();
   const Painter::SurfaceBuffer* surface_buffer =
       painter_->GetAndLockCurrentSurfaceBuffer();
   context->save();
@@ -35,6 +37,9 @@ bool Viewer::on_draw(const Cairo::RefPtr<Cairo::Context>& context) {
     context->paint();
   context->restore();
   painter_->ReleaseCurrentSurfaceBuffer();
+  context->save();
+    options().controller()->Draw(width, height, context);
+  context->restore();
   return true;
 }
 

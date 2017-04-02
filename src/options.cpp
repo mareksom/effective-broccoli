@@ -70,3 +70,27 @@ int Options::NullColor() const {
 void Options::SetNullColor(int color) {
   null_color_ = color;
 }
+
+double Options::MessageBoxesMargin() const {
+  return message_boxes_margin_;
+}
+
+void Options::SetMessageBoxesMargin(double margin) {
+  message_boxes_margin_ = margin;
+}
+
+double Options::MainMessageBoxMaxWidth() const {
+  return main_message_box_max_width_;
+}
+
+void Options::SetMainMessageBoxMaxWidth(double width) {
+  main_message_box_max_width_ = width;
+}
+
+double Options::SingleBoxMessageHeight() const {
+  return single_box_message_height_;
+}
+
+void Options::SetSingleBoxMessageHeight(double height) {
+  single_box_message_height_ = height;
+}

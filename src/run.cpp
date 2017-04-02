@@ -28,6 +28,8 @@ int RunBoard(int argc, char** argv,
   Painter painter(&options, board.get(),
                   options.WindowWidthOnStart(), options.WindowHeightOnStart());
   Viewer viewer(&options, &painter);
+  options.controller()->SetOptions(&options);
+  options.controller()->SetViewer(&viewer);
   options.controller()->SetPainter(&painter);
   painter.SetViewer(&viewer);
   painter.Start();

@@ -35,6 +35,15 @@ class Options {
   int NullColor() const;
   void SetNullColor(int color);
 
+  double MessageBoxesMargin() const;
+  void SetMessageBoxesMargin(double margin);
+
+  double MainMessageBoxMaxWidth() const;
+  void SetMainMessageBoxMaxWidth(double width);
+
+  double SingleBoxMessageHeight() const;
+  void SetSingleBoxMessageHeight(double height);
+
  private:
   Controller* controller_ = nullptr;
 
@@ -50,6 +59,10 @@ class Options {
   double zoom_speed_ = 1.2;
 
   int null_color_ = 200;
+
+  double message_boxes_margin_ = 10;
+  double main_message_box_max_width_ = 300;
+  double single_box_message_height_ = 25;
 };
 
 #endif  // OPTIONS_H_
