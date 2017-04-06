@@ -27,9 +27,11 @@ OUTER_BIN = bin
 BIN = $(OUTER_BIN)/$(MODE)
 EXE = run.e
 GRID_SRC = grid
+COMMUNICATION_SRC = communication
 SRC = src
 
 GRID_HEADERS_DIR = $(BIN)/grid
+COMMUNICATION_HEADERS_DIR = $(BIN)/communication
 
 
 ################################################################################
@@ -118,9 +120,42 @@ OBJS += $(addprefix $(BIN)/, $(addsuffix .o, $(GRID_SRC_SOURCES)))
 ################################ Copying headers ###############################
 ################################################################################
 
-COPIED_HEADERS = $(addprefix $(GRID_HEADERS_DIR)/, $(GRID_SRC_HEADERS))
+GRID_COPIED_HEADERS = $(addprefix $(GRID_HEADERS_DIR)/, $(GRID_SRC_HEADERS))
 
-$(COPIED_HEADERS): $(GRID_HEADERS_DIR)/%: %
+$(GRID_COPIED_HEADERS): $(GRID_HEADERS_DIR)/%: %
+	@mkdir -p $(dir $@)
+	cp $^ $@
+
+
+################################################################################
+######################## Compiling communication sources #######################
+################################################################################
+
+# All dirs in $(COMMUNICATION_SRC) directory.
+COMMUNICATION_SRC_DIRS = $(shell find $(COMMUNICATION_SRC) -type d)
+# All cpp files in $(COMMUNICATION_SRC) directory.
+COMMUNICATION_SRC_SOURCES = $(shell find $(COMMUNICATION_SRC) -name '*.cpp')
+# All header files in $(COMMUNICATION_SRC) directory.
+COMMUNICATION_SRC_HEADERS = $(shell find $(COMMUNICATION_SRC) -name '*.h')
+
+# Compiles sources to object files.
+$(addprefix $(BIN)/, $(addsuffix .o, $(COMMUNICATION_SRC_SOURCES))): \
+		$(BIN)/%.o: % $(COMMUNICATION_SRC_HEADERS)
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -I$(COMMUNICATION_SRC) -c $< -o $@
+
+# Appends normal object files to the list of all objects.
+OBJS += $(addprefix $(BIN)/, $(addsuffix .o, $(COMMUNICATION_SRC_SOURCES)))
+
+
+################################################################################
+################################ Copying headers ###############################
+################################################################################
+
+COMMUNICATION_COPIED_HEADERS = \
+		$(addprefix $(COMMUNICATION_HEADERS_DIR)/, $(COMMUNICATION_SRC_HEADERS))
+
+$(COMMUNICATION_COPIED_HEADERS): $(COMMUNICATION_HEADERS_DIR)/%: %
 	@mkdir -p $(dir $@)
 	cp $^ $@
 
@@ -138,9 +173,11 @@ SRC_HEADERS = $(shell find $(SRC) -name '*.h')
 
 # Compiles sources to object files.
 $(addprefix $(BIN)/, $(addsuffix .o, $(SRC_SOURCES))): \
-		$(BIN)/%.o: % $(SRC_HEADERS) $(COPIED_HEADERS)
+		$(BIN)/%.o: % \
+				$(SRC_HEADERS) $(GRID_COPIED_HEADERS) $(COMMUNICATION_COPIED_HEADERS)
 	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -I$(SRC) -I$(BIN)/$(GRID_SRC)/ -c $< -o $@
+	$(CXX) -c $< -o $@ \
+			$(CXXFLAGS) -I$(SRC) -I$(BIN)/$(GRID_SRC)/ -I$(BIN)/$(COMMUNICATION_SRC)
 
 # Appends normal object files to the list of all objects.
 OBJS += $(addprefix $(BIN)/, $(addsuffix .o, $(SRC_SOURCES)))
