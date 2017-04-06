@@ -17,6 +17,7 @@ Glib::RefPtr<Gtk::Application> application;
 
 int RunBoard(int argc, char** argv,
              Options options, std::unique_ptr<Board> board) {
+  argc = 1;
   if (options.controller() == nullptr) {
     std::cerr << "You must set a controller: "
                  "options.SetController(my_controller);" << std::endl;
