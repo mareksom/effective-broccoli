@@ -8,13 +8,28 @@ CXXLDFLAGS = -pthread -lpng
 CXXFLAGS_DEBUG = -g -O0
 CXXFLAGS_RELEASE = -DNDEBUG -O2
 
-BIN = bin
-EXE = run.e
-SRC = src
-SAMPLE_DIR = sample
+# Default target.
+all: all_things
 
-HEADERS_DIR = $(BIN)/grid
-OBJECT = $(HEADERS_DIR)/grid.o
+# Debug mode.
+DEBUG ?= 1
+ifeq ($(DEBUG), 1)
+  CXXFLAGS += $(CXXFLAGS_DEBUG)
+  CCFLAGS += $(CCFLAGS_DEBUG)
+  MODE = debug
+else
+  CXXFLAGS += $(CXXFLAGS_RELEASE)
+  CCFLAGS += $(CCFLAGS_RELEASE)
+  MODE = release
+endif
+
+OUTER_BIN = bin
+BIN = $(OUTER_BIN)/$(MODE)
+EXE = run.e
+GRID_SRC = grid
+SRC = src
+
+GRID_HEADERS_DIR = $(BIN)/grid
 
 
 ################################################################################
@@ -79,21 +94,35 @@ CXXLDFLAGS += $(GTKMM_LINK_OPTIONS)
 
 
 ################################################################################
-############################ Script initialization #############################
+############################ Compiling grid sources ############################
 ################################################################################
 
-# Default target.
-all: all_things
+# All dirs in $(GRID_SRC) directory.
+GRID_SRC_DIRS = $(shell find $(GRID_SRC) -type d)
+# All cpp files in $(GRID_SRC) directory.
+GRID_SRC_SOURCES = $(shell find $(GRID_SRC) -name '*.cpp')
+# All header files in $(GRID_SRC) directory.
+GRID_SRC_HEADERS = $(shell find $(GRID_SRC) -name '*.h')
 
-# Debug mode.
-DEBUG ?= 1
-ifeq ($(DEBUG), 1)
-  CXXFLAGS += $(CXXFLAGS_DEBUG)
-  CCFLAGS += $(CCFLAGS_DEBUG)
-else
-  CXXFLAGS += $(CXXFLAGS_RELEASE)
-  CCFLAGS += $(CCFLAGS_RELEASE)
-endif
+# Compiles sources to object files.
+$(addprefix $(BIN)/, $(addsuffix .o, $(GRID_SRC_SOURCES))): \
+		$(BIN)/%.o: % $(GRID_SRC_HEADERS)
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -I$(GRID_SRC) -c $< -o $@
+
+# Appends normal object files to the list of all objects.
+OBJS += $(addprefix $(BIN)/, $(addsuffix .o, $(GRID_SRC_SOURCES)))
+
+
+################################################################################
+################################ Copying headers ###############################
+################################################################################
+
+COPIED_HEADERS = $(addprefix $(GRID_HEADERS_DIR)/, $(GRID_SRC_HEADERS))
+
+$(COPIED_HEADERS): $(GRID_HEADERS_DIR)/%: %
+	@mkdir -p $(dir $@)
+	cp $^ $@
 
 
 ################################################################################
@@ -101,7 +130,7 @@ endif
 ################################################################################
 
 # All dirs in $(SRC) directory.
-SRC_DIRS = $(shell find $(SRC) -type d)
+SRC_DIRS = $(shell find $(GRID_SRC) -type d)
 # All cpp files in $(SRC) directory.
 SRC_SOURCES = $(shell find $(SRC) -name '*.cpp')
 # All header files in $(SRC) directory.
@@ -109,12 +138,12 @@ SRC_HEADERS = $(shell find $(SRC) -name '*.h')
 
 # Compiles sources to object files.
 $(addprefix $(BIN)/, $(addsuffix .o, $(SRC_SOURCES))): \
-		$(BIN)/%.o: % $(SRC_HEADERS)
+		$(BIN)/%.o: % $(SRC_HEADERS) $(COPIED_HEADERS)
 	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -I$(SRC) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -I$(SRC) -I$(BIN)/$(GRID_SRC)/ -c $< -o $@
 
 # Appends normal object files to the list of all objects.
-OBJS = $(addprefix $(BIN)/, $(addsuffix .o, $(SRC_SOURCES)))
+OBJS += $(addprefix $(BIN)/, $(addsuffix .o, $(SRC_SOURCES)))
 
 
 ################################################################################
@@ -122,19 +151,11 @@ OBJS = $(addprefix $(BIN)/, $(addsuffix .o, $(SRC_SOURCES)))
 ################################################################################
 
 # Creates the global object file.
-$(OBJECT): $(OBJS)
+$(BIN)/$(EXE): $(OBJS)
 	@mkdir -p $(dir $@)
-	ld -r $(OBJS) -o $@
+	$(CXX) $^ -o $@ $(CXXLDFLAGS)
 
-
-################################################################################
-################################ Copying headers ###############################
-################################################################################
-
-COPIED_HEADERS = $(addprefix $(HEADERS_DIR)/, $(SRC_HEADERS))
-
-$(COPIED_HEADERS): $(HEADERS_DIR)/%: %
-	@mkdir -p $(dir $@)
+$(OUTER_BIN)/$(EXE): $(BIN)/$(EXE)
 	cp $^ $@
 
 
@@ -144,29 +165,11 @@ $(COPIED_HEADERS): $(HEADERS_DIR)/%: %
 
 .PHONY: clean
 clean:
-	rm -rf $(BIN)
-
-
-################################################################################
-#################################### Sample ####################################
-################################################################################
-
-SAMPLE_MAIN = $(SAMPLE_DIR)/main.cpp
-SAMPLE_BIN = $(BIN)/$(SAMPLE_DIR)/bin
-SAMPLE_MAIN_OBJ = $(SAMPLE_BIN)/main.o
-
-$(SAMPLE_MAIN_OBJ): $(SAMPLE_MAIN) $(COPIED_HEADERS)
-	@mkdir -p $(dir $@)
-	$(CXX) $(SAMPLE_MAIN) -c -o $@ $(CXXFLAGS) -I$(BIN)
-
-# Links all object files into the final executable.
-$(BIN)/$(EXE): $(OBJECT) $(SAMPLE_MAIN_OBJ)
-	@mkdir -p $(dir $@)
-	$(CXX) $^ -o $@ $(CXXLDFLAGS)
+	rm -rf $(OUTER_BIN)
 
 
 ################################################################################
 ################################## All things ##################################
 ################################################################################
 
-all_things: $(OBJECT) $(BIN)/$(EXE) $(COPIED_HEADERS)
+all_things: $(OUTER_BIN)/$(EXE)

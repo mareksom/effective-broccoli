@@ -3,15 +3,15 @@
 #include <string>
 #include <thread>
 
-#include "grid/src/controller.h"
-#include "grid/src/hex_board.h"
-#include "grid/src/makra.h"
-#include "grid/src/object.h"
-#include "grid/src/options.h"
-#include "grid/src/painter.h"
-#include "grid/src/run.h"
-#include "grid/src/square_board.h"
-#include "grid/src/viewer.h"
+#include "grid/controller.h"
+#include "grid/hex_board.h"
+#include "grid/makra.h"
+#include "grid/object.h"
+#include "grid/options.h"
+#include "grid/painter.h"
+#include "grid/run.h"
+#include "grid/square_board.h"
+#include "grid/viewer.h"
 
 std::mutex position_mutex;
 int px, py;
