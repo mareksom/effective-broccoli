@@ -25,7 +25,7 @@ endif
 
 OUTER_BIN = bin
 BIN = $(OUTER_BIN)/$(MODE)
-EXE = run.e
+EXE = prog.e
 GRID_SRC = grid
 COMMUNICATION_SRC = communication
 SRC = src
