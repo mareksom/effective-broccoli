@@ -12,21 +12,22 @@
 #include "grid/run.h"
 #include "grid/square_board.h"
 #include "grid/viewer.h"
+#include "makra.h"
 
 std::mutex position_mutex;
 int px, py;
 
-struct Contr : Controller {
+struct Contr : Grid::Controller {
   void Init() {
     AddSingleMessageBox(
         1, 0, 0, 1,
-        [&](StreamReader& sr) -> void {
+        [&](Grid::StreamReader& sr) -> void {
           std::lock_guard<std::mutex> lock(position_mutex);
           sr << "Position: (" << px << ", " << py << ")";
         });
     AddSingleMessageBox(
         1, 1, 1, 1,
-        [&](StreamReader& sr) -> void {
+        [&](Grid::StreamReader& sr) -> void {
           std::lock_guard<std::mutex> lock(position_mutex);
           sr << rand() << " <- random value";
         });
@@ -45,7 +46,7 @@ struct Contr : Controller {
     const int r = rand() % 256;
     const int g = rand() % 256;
     const int b = rand() % 256;
-    return MakeColor(r, g, b);
+    return Grid::MakeColor(r, g, b);
   }
 
   int GetObject(int x, int y) override {
@@ -58,9 +59,9 @@ struct Contr : Controller {
     const int dy = py;
     position_mutex.unlock();
     if (x == dx and y == dy) {
-      return MakeObject(Object::kSad, r, g, b);
+      return Grid::MakeObject(Grid::Object::kSad, r, g, b);
     } else {
-      return MakeObject(Object::kNone, r, g, b);
+      return Grid::MakeObject(Grid::Object::kNone, r, g, b);
     }
   }
 
@@ -114,7 +115,7 @@ struct Contr : Controller {
 int main(int argc, char** argv) {
   controller.Init();
 
-  Options options;
+  Grid::Options options;
   options.SetController(&controller);
 
   std::string board_type;
@@ -135,13 +136,13 @@ int main(int argc, char** argv) {
     }
   }
 
-  std::unique_ptr<Board> board;
+  std::unique_ptr<Grid::Board> board;
   if (board_type == "square") {
-    board = std::make_unique<SquareBoard>();
+    board = std::make_unique<Grid::SquareBoard>();
   } else if (board_type == "hex") {
-    board = std::make_unique<HexBoard>();
+    board = std::make_unique<Grid::HexBoard>();
   } else {
     assert(false);
   }
-  return RunBoard(argc, argv, options, std::move(board));
+  return Grid::RunBoard(argc, argv, options, std::move(board));
 }

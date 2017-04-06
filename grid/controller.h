@@ -1,5 +1,5 @@
-#ifndef CONTROLLER_H_
-#define CONTROLLER_H_
+#ifndef GRID_CONTROLLER_H_
+#define GRID_CONTROLLER_H_
 
 #include <cairomm/context.h>
 #include <cairomm/refptr.h>
@@ -11,6 +11,8 @@
 #include "options.h"
 #include "single_message_box.h"
 #include "stream_reader.h"
+
+namespace Grid {
 
 class Board;
 class Painter;
@@ -88,4 +90,6 @@ class Controller {
   std::vector<SingleMessageBox> single_message_boxes_;
 };
 
-#endif  // CONTROLLER_H_
+}  // namespace Grid
+
+#endif  // GRID_CONTROLLER_H_

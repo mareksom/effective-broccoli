@@ -1,9 +1,11 @@
-#ifndef LOCK_FREE_QUEUE_H_
-#define LOCK_FREE_QUEUE_H_
+#ifndef GRID_LOCK_FREE_QUEUE_H_
+#define GRID_LOCK_FREE_QUEUE_H_
 
 #include <atomic>
 #include <condition_variable>
 #include <mutex>
+
+namespace Grid {
 
 // A queue that uses only a single atomic variable.  It is faster than a normal
 // queue protected with a mutex.  However, it can only be used between two
@@ -100,4 +102,6 @@ void LockFreeQueue<T, Size>::Append(T t) {
   cond_var_.notify_one();
 }
 
-#endif  // LOCK_FREE_QUEUE_H_
+}  // namespace Grid
+
+#endif  // GRID_LOCK_FREE_QUEUE_H_

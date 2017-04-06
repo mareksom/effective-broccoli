@@ -1,5 +1,5 @@
-#ifndef PAINTER_H_
-#define PAINTER_H_
+#ifndef GRID_PAINTER_H_
+#define GRID_PAINTER_H_
 
 #include <cairomm/context.h>
 #include <cairomm/surface.h>
@@ -9,6 +9,8 @@
 
 #include "lock_free_queue.h"
 #include "object_updater.h"
+
+namespace Grid {
 
 class Board;
 class Options;
@@ -91,5 +93,7 @@ class Painter {
   SurfaceBuffer surface_buffers_[3];
   ObjectUpdater<SurfaceBuffer> surface_buffer_updater_;
 };
+
+}  // GRID_namespace Grid
 
 #endif  // PAINTER_H_

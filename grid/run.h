@@ -1,5 +1,5 @@
-#ifndef RUN_H_
-#define RUN_H_
+#ifndef GRID_RUN_H_
+#define GRID_RUN_H_
 
 #include <memory>
 
@@ -7,7 +7,11 @@
 #include "controller.h"
 #include "options.h"
 
+namespace Grid {
+
 int RunBoard(int argc, char** argv,
              Options options, std::unique_ptr<Board> board);
 
-#endif  // RUN_H_
+}  // namespace Grid
+
+#endif  // GRID_RUN_H_

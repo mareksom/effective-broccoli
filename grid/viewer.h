@@ -1,5 +1,5 @@
-#ifndef VIEWER_H_
-#define VIEWER_H_
+#ifndef GRID_VIEWER_H_
+#define GRID_VIEWER_H_
 
 #include <cairomm/context.h>
 #include <cairomm/refptr.h>
@@ -7,6 +7,8 @@
 #include <glibmm/dispatcher.h>
 #include <gtkmm/drawingarea.h>
 #include <utility>
+
+namespace Grid {
 
 class Options;
 class Painter;
@@ -39,4 +41,6 @@ class Viewer : public Gtk::DrawingArea {
   Glib::Dispatcher redraw_signal_;
 };
 
-#endif  // VIEWER_H_
+}  // namespace Grid
+
+#endif  // GRID_VIEWER_H_

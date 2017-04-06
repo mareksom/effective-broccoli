@@ -1,11 +1,13 @@
-#ifndef SINGLE_MESSAGE_BOX_H_
-#define SINGLE_MESSAGE_BOX_H_
+#ifndef GRID_SINGLE_MESSAGE_BOX_H_
+#define GRID_SINGLE_MESSAGE_BOX_H_
 
 #include <cairomm/context.h>
 #include <cairomm/refptr.h>
 #include <functional>
 
 #include "stream_reader.h"
+
+namespace Grid {
 
 class SingleMessageBox {
  public:
@@ -23,4 +25,6 @@ class SingleMessageBox {
   std::function<void(StreamReader&)> generator_;
 };
 
-#endif  // SINGLE_MESSAGE_BOX_H_
+}  // namespace Grid
+
+#endif  // GRID_SINGLE_MESSAGE_BOX_H_

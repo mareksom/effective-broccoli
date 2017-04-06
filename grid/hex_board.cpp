@@ -7,6 +7,8 @@
 #include "object.h"
 #include "options.h"
 
+namespace Grid {
+
 namespace {
 
 constexpr double sin_pi_div_6 = 0.5;
@@ -97,3 +99,5 @@ void HexBoard::DrawField(
     context->restore();
   context->restore();
 }
+
+}  // namespace Grid

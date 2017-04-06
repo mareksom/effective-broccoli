@@ -1,5 +1,7 @@
 #include "single_message_box.h"
 
+namespace Grid {
+
 SingleMessageBox::SingleMessageBox(
     double text_r, double text_g, double text_b, double text_a,
     std::function<void(StreamReader&)> generator)
@@ -51,3 +53,5 @@ std::string SingleMessageBox::GetMessage() {
   }
   return message;
 }
+
+}  // namespace Grid

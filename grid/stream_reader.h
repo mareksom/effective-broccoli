@@ -1,5 +1,5 @@
-#ifndef STREAM_READER_H_
-#define STREAM_READER_H_
+#ifndef GRID_STREAM_READER_H_
+#define GRID_STREAM_READER_H_
 
 #include <functional>
 #include <iostream>
@@ -8,6 +8,8 @@
 #include <string>
 #include <type_traits>
 #include <utility>
+
+namespace Grid {
 
 namespace StreamReaderInternal {
 
@@ -50,4 +52,6 @@ std::stringstream stream_;
 
 using StreamReader = StreamReaderInternal::StreamReader;
 
-#endif  // STREAM_READER_H_
+}  // namespace Grid
+
+#endif  // GRID_STREAM_READER_H_

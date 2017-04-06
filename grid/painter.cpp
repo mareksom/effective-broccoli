@@ -11,6 +11,8 @@
 #include "surface_utils.h"
 #include "viewer.h"
 
+namespace Grid {
+
 Painter::Painter(const Options* options, Board* board, int width, int height)
     : options_(options), board_(board), viewer_(nullptr),
       modification_{width / 2.0, height / 2.0, options->InitialScale(),
@@ -320,3 +322,5 @@ void Painter::ProcessSomeFields() {
   }
   UpdateCurrentSurface();
 }
+
+}  // namespace Grid

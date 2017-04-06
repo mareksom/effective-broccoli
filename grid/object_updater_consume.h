@@ -1,5 +1,5 @@
-#ifndef OBJECT_UPDATER_CONSUME_H_
-#define OBJECT_UPDATER_CONSUME_H_
+#ifndef GRID_OBJECT_UPDATER_CONSUME_H_
+#define GRID_OBJECT_UPDATER_CONSUME_H_
 
 #include <atomic>
 #include <cassert>
@@ -7,6 +7,8 @@
 #include <mutex>
 
 #include "lock_free_queue.h"
+
+namespace Grid {
 
 template <typename T>
 class ObjectUpdaterConsume {
@@ -104,4 +106,6 @@ void ObjectUpdaterConsume<T>::SetCurrentObject(T* object) {
   }
 }
 
-#endif  // OBJECT_UPDATER_CONSUME_H_
+}  // namespace Grid
+
+#endif  // GRID_OBJECT_UPDATER_CONSUME_H_

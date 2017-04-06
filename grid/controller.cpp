@@ -3,6 +3,8 @@
 #include "painter.h"
 #include "viewer.h"
 
+namespace Grid {
+
 int MakeColor(int r, int g, int b) {
   return (r << 16) | (g << 8) | b;
 }
@@ -105,3 +107,5 @@ Viewer& Controller::viewer() {
 Painter& Controller::painter() {
   return *painter_;
 }
+
+}  // namespace Grid

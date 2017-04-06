@@ -7,6 +7,8 @@
 #include "options.h"
 #include "painter.h"
 
+namespace Grid {
+
 Viewer::Viewer(const Options* options, Painter* painter)
     : options_(options), painter_(painter) {
   add_events(Gdk::BUTTON_PRESS_MASK);
@@ -234,3 +236,5 @@ bool Viewer::on_key_press_event(GdkEventKey* event) {
 const Options& Viewer::options() const {
   return *options_;
 }
+
+}  // namespace Grid

@@ -1,8 +1,10 @@
-#ifndef SURFACE_UTILS_H_
-#define SURFACE_UTILS_H_
+#ifndef GRID_SURFACE_UTILS_H_
+#define GRID_SURFACE_UTILS_H_
 
 #include <cairomm/refptr.h>
 #include <cairomm/surface.h>
+
+namespace Grid {
 
 class Options;
 
@@ -13,4 +15,6 @@ void ShiftSurface(const Options& options,
                   const Cairo::RefPtr<Cairo::ImageSurface>& surface,
                   int dx, int dy);
 
-#endif  // SURFACE_UTILS_H_
+}  // namespace Grid
+
+#endif  // GRID_SURFACE_UTILS_H_

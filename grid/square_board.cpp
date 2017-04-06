@@ -9,6 +9,8 @@
 #include "object.h"
 #include "options.h"
 
+namespace Grid {
+
 std::pair<int, int> SquareBoard::PointToCoordinates(double x, double y) const {
   return std::make_pair(static_cast<int>(std::floor(x)),
                         static_cast<int>(std::floor(y)));
@@ -60,3 +62,5 @@ void SquareBoard::DrawField(
     context->restore();
   context->restore();
 }
+
+}  // namespace Grid

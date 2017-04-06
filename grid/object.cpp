@@ -4,6 +4,8 @@
 #include <cassert>
 #include <cmath>
 
+namespace Grid {
+
 namespace {
 
 constexpr double kBorderWidth = 0.2;
@@ -273,3 +275,5 @@ void DrawObject(const Cairo::RefPtr<Cairo::Context>& context, int object) {
     }
   context->restore();
 }
+
+}  // namespace Grid

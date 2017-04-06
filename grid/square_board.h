@@ -1,7 +1,9 @@
-#ifndef SQUARE_BOARD_H_
-#define SQUARE_BOARD_H_
+#ifndef GRID_SQUARE_BOARD_H_
+#define GRID_SQUARE_BOARD_H_
 
 #include "board.h"
+
+namespace Grid {
 
 class SquareBoard : public Board {
  public:
@@ -17,4 +19,6 @@ class SquareBoard : public Board {
                  const Cairo::RefPtr<Cairo::Context>& context) const override;
 };
 
-#endif  // SQUARE_BOARD_H_
+}  // namespace Grid
+
+#endif  // GRID_SQUARE_BOARD_H_

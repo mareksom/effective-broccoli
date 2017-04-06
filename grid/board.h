@@ -1,5 +1,5 @@
-#ifndef BOARD_H_
-#define BOARD_H_
+#ifndef GRID_BOARD_H_
+#define GRID_BOARD_H_
 
 #include <cairomm/context.h>
 #include <cairomm/refptr.h>
@@ -8,6 +8,8 @@
 #include <utility>
 
 #include "options.h"
+
+namespace Grid {
 
 class Board {
  public:
@@ -34,4 +36,6 @@ class Board {
   const Options* options_;
 };
 
-#endif  // BOARD_H_
+}  // namespace Grid
+
+#endif  // GRID_BOARD_H_

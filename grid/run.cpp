@@ -7,6 +7,8 @@
 #include "painter.h"
 #include "viewer.h"
 
+namespace Grid {
+
 namespace {
 
 Glib::RefPtr<Gtk::Application> application;
@@ -41,3 +43,5 @@ int RunBoard(int argc, char** argv,
   viewer.show();
   return application->run(window);
 }
+
+}  // namespace Grid

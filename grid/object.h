@@ -1,8 +1,10 @@
-#ifndef OBJECT_H_
-#define OBJECT_H_
+#ifndef GRID_OBJECT_H_
+#define GRID_OBJECT_H_
 
 #include <cairomm/context.h>
 #include <cairomm/refptr.h>
+
+namespace Grid {
 
 enum class Object : int {
   kNone      = 0,
@@ -25,4 +27,6 @@ int MakeObject(Object object, int r, int g, int b);
 
 void DrawObject(const Cairo::RefPtr<Cairo::Context>& context, int object);
 
-#endif  // OBJECT_H_
+}  // namespace Grid
+
+#endif  // GRID_OBJECT_H_

@@ -1,5 +1,5 @@
-#ifndef MAKRA_H_
-#define MAKRA_H_
+#ifndef GRID_MAKRA_H_
+#define GRID_MAKRA_H_
 
 #include <iostream>
 #include <iterator>
@@ -7,6 +7,8 @@
 #include <sstream>
 #include <type_traits>
 #include <utility>
+
+namespace Grid {
 
 #define sim template < class c
 #define ris return * this
@@ -39,11 +41,13 @@ sim dor(const c&) { ris; }
 #endif
 };
 
-#define imie(...) " [" << #__VA_ARGS__ ": " << (__VA_ARGS__) << "] "
+//#define imie(...) " [" << #__VA_ARGS__ ": " << (__VA_ARGS__) << "] "
 
 #undef sim
 #undef ris
 #undef dor
 #undef eni
 
-#endif  // MAKRA_H_
+}  // namespace Grid
+
+#endif  // GRID_MAKRA_H_

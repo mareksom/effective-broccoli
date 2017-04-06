@@ -1,5 +1,7 @@
 #include "message_box.h"
 
+namespace Grid {
+
 MessageBox::MessageBox(
     double text_r, double text_g, double text_b, double text_a,
     TextAlign text_align, TextFlow text_flow, TextWrap text_wrap)
@@ -168,3 +170,5 @@ void MessageBox::AddMessage(const std::string& message) {
     messages_.push_front(std::move(next_line));
   }
 }
+
+}  // namespace Grid

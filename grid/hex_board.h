@@ -1,7 +1,9 @@
-#ifndef HEX_BOARD_H_
-#define HEX_BOARD_H_
+#ifndef GRID_HEX_BOARD_H_
+#define GRID_HEX_BOARD_H_
 
 #include "board.h"
+
+namespace Grid {
 
 class HexBoard : public Board {
  public:
@@ -19,4 +21,6 @@ class HexBoard : public Board {
  private:
 };
 
-#endif  // HEX_BOARD_H_
+}  // namespace Grid
+
+#endif  // GRID_HEX_BOARD_H_

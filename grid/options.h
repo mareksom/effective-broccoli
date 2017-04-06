@@ -1,5 +1,7 @@
-#ifndef OPTIONS_H_
-#define OPTIONS_H_
+#ifndef GRID_OPTIONS_H_
+#define GRID_OPTIONS_H_
+
+namespace Grid {
 
 class Controller;
 
@@ -65,4 +67,6 @@ class Options {
   double single_box_message_height_ = 25;
 };
 
-#endif  // OPTIONS_H_
+}  // namespace Grid
+
+#endif  // GRID_OPTIONS_H_

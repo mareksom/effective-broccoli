@@ -1,11 +1,13 @@
-#ifndef OBJECT_UPDATER_H_
-#define OBJECT_UPDATER_H_
+#ifndef GRID_OBJECT_UPDATER_H_
+#define GRID_OBJECT_UPDATER_H_
 
 #include <atomic>
 #include <cassert>
 #include <vector>
 
 #include "makra.h"
+
+namespace Grid {
 
 template <typename T>
 class ObjectUpdater {
@@ -83,4 +85,6 @@ void ObjectUpdater<T>::SetCurrentObject(T* object) {
   }
 }
 
-#endif  // OBJECT_UPDATER_H_
+}  // namespace Grid
+
+#endif  // GRID_OBJECT_UPDATER_H_

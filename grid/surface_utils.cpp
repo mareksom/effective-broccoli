@@ -5,6 +5,8 @@
 
 #include "options.h"
 
+namespace Grid {
+
 void CopySurface(const Cairo::RefPtr<Cairo::ImageSurface>& src,
                  const Cairo::RefPtr<Cairo::ImageSurface>& dst) {
   const int height = src->get_height();
@@ -72,3 +74,5 @@ void ShiftSurface(const Options& options,
   }
   surface->mark_dirty();
 }
+
+}  // namespace Grid

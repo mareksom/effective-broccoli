@@ -1,10 +1,12 @@
-#ifndef MESSAGE_BOX_H_
-#define MESSAGE_BOX_H_
+#ifndef GRID_MESSAGE_BOX_H_
+#define GRID_MESSAGE_BOX_H_
 
 #include <cairomm/context.h>
 #include <cairomm/refptr.h>
 #include <list>
 #include <mutex>
+
+namespace Grid {
 
 class MessageBox {
  public:
@@ -43,4 +45,6 @@ class MessageBox {
   std::list<std::string> messages_;
 };
 
-#endif  // MESSAGE_BOX_H_
+}  // namespace Grid
+
+#endif  // GRID_MESSAGE_BOX_H_

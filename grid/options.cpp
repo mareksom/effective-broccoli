@@ -1,5 +1,7 @@
 #include "options.h"
 
+namespace Grid {
+
 Options::Options() {}
 
 Controller* Options::controller() const {
@@ -94,3 +96,5 @@ double Options::SingleBoxMessageHeight() const {
 void Options::SetSingleBoxMessageHeight(double height) {
   single_box_message_height_ = height;
 }
+
+}  // namespace Grid
