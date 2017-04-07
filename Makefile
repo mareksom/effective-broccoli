@@ -3,10 +3,10 @@
 ################################################################################
 
 CXX = g++
-CXXFLAGS = -std=c++14
+CXXFLAGS = -std=c++14 -DLOCAL
 CXXLDFLAGS = -pthread -lpng
 CXXFLAGS_DEBUG = -g -O0
-CXXFLAGS_RELEASE = -DNDEBUG -O2
+CXXFLAGS_RELEASE = -DNDEBUG -O3
 
 # Default target.
 all: all_things
@@ -69,7 +69,7 @@ GTKMM_INCLUDE_PATHS =                                     \
 	-isystem /usr/include/gio-unix-2.0/                     \
 	-isystem /usr/include/harfbuzz
 
-CXXFLAGS += $(GTKMM_INCLUDE_PATHS)
+CXX_ALL_FLAGS = $(CXXFLAGS) $(GTKMM_INCLUDE_PATHS)
 
 GTKMM_LINK_OPTIONS =  \
 	-lgtkmm-3.0         \
@@ -92,7 +92,7 @@ GTKMM_LINK_OPTIONS =  \
 	-lgobject-2.0       \
 	-lglib-2.0
 
-CXXLDFLAGS += $(GTKMM_LINK_OPTIONS)
+CXX_ALL_LDFLAGS += $(CXXLDFLAGS) $(GTKMM_LINK_OPTIONS)
 
 
 ################################################################################
@@ -110,7 +110,8 @@ GRID_SRC_HEADERS = $(shell find $(GRID_SRC) -name '*.h')
 $(addprefix $(BIN)/, $(addsuffix .o, $(GRID_SRC_SOURCES))): \
 		$(BIN)/%.o: % $(GRID_SRC_HEADERS)
 	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -I$(GRID_SRC) -c $< -o $@
+	@/bin/echo -e "Compiling grid library \033[36m$<\033[0m $(CXXFLAGS)"
+	@$(CXX) $(CXX_ALL_FLAGS) -I$(GRID_SRC) -c $< -o $@
 
 # Appends normal object files to the list of all objects.
 OBJS += $(addprefix $(BIN)/, $(addsuffix .o, $(GRID_SRC_SOURCES)))
@@ -124,7 +125,7 @@ GRID_COPIED_HEADERS = $(addprefix $(GRID_HEADERS_DIR)/, $(GRID_SRC_HEADERS))
 
 $(GRID_COPIED_HEADERS): $(GRID_HEADERS_DIR)/%: %
 	@mkdir -p $(dir $@)
-	cp $^ $@
+	@cp $^ $@
 
 
 ################################################################################
@@ -142,7 +143,8 @@ COMMUNICATION_SRC_HEADERS = $(shell find $(COMMUNICATION_SRC) -name '*.h')
 $(addprefix $(BIN)/, $(addsuffix .o, $(COMMUNICATION_SRC_SOURCES))): \
 		$(BIN)/%.o: % $(COMMUNICATION_SRC_HEADERS)
 	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -I$(COMMUNICATION_SRC) -c $< -o $@
+	@/bin/echo -e "Compiling communication library \033[36m$<\033[0m $(CXXFLAGS)"
+	@$(CXX) $(CXX_ALL_FLAGS) -I$(COMMUNICATION_SRC) -c $< -o $@
 
 # Appends normal object files to the list of all objects.
 OBJS += $(addprefix $(BIN)/, $(addsuffix .o, $(COMMUNICATION_SRC_SOURCES)))
@@ -157,7 +159,7 @@ COMMUNICATION_COPIED_HEADERS = \
 
 $(COMMUNICATION_COPIED_HEADERS): $(COMMUNICATION_HEADERS_DIR)/%: %
 	@mkdir -p $(dir $@)
-	cp $^ $@
+	@cp $^ $@
 
 
 ################################################################################
@@ -176,8 +178,9 @@ $(addprefix $(BIN)/, $(addsuffix .o, $(SRC_SOURCES))): \
 		$(BIN)/%.o: % \
 				$(SRC_HEADERS) $(GRID_COPIED_HEADERS) $(COMMUNICATION_COPIED_HEADERS)
 	@mkdir -p $(dir $@)
-	$(CXX) -c $< -o $@ \
-			$(CXXFLAGS) -I$(SRC) -I$(BIN)/$(GRID_SRC)/ -I$(BIN)/$(COMMUNICATION_SRC)
+	@/bin/echo -e "Compiling \033[36m$<\033[0m $(CXXFLAGS)"
+	@$(CXX) -c $< -o $@ $(CXX_ALL_FLAGS) \
+			-I$(SRC) -I$(BIN)/$(GRID_SRC)/ -I$(BIN)/$(COMMUNICATION_SRC)
 
 # Appends normal object files to the list of all objects.
 OBJS += $(addprefix $(BIN)/, $(addsuffix .o, $(SRC_SOURCES)))
@@ -190,7 +193,8 @@ OBJS += $(addprefix $(BIN)/, $(addsuffix .o, $(SRC_SOURCES)))
 # Creates the global object file.
 $(BIN)/$(EXE): $(OBJS)
 	@mkdir -p $(dir $@)
-	$(CXX) $^ -o $@ $(CXXLDFLAGS)
+	@/bin/echo -e "Linking $(CXXLDFLAGS)"
+	@$(CXX) $^ -o $@ $(CXX_ALL_LDFLAGS)
 
 $(OUTER_BIN)/$(EXE): $(BIN)/$(EXE)
 	cp $^ $@

@@ -37,6 +37,7 @@ class Painter {
   void Zoom(double x, double y, double factor);
 
   void InvalidateField(int x, int y);
+  void InvalidateEverything();
   void CenterOn(int x, int y);
 
   std::pair<int, int> WindowToBoardCoordinates(double x, double y) const;
@@ -55,8 +56,8 @@ class Painter {
   std::pair<double, double> BoardToSurfaceCoordinates(double x, double y) const;
   std::pair<double, double> SurfaceToBoardCoordinates(double x, double y) const;
 
-  // @SetModification() requires @update_mutex_ being locked.
-  void SetModification();
+  // @TrySetModification() requires @update_mutex_ being locked.
+  void TrySetModification();
   void UpdateCurrentSurface();
   void DrawLoop();
   void ApplyTranslation(int dx, int dy);
@@ -74,6 +75,8 @@ class Painter {
 
   std::mutex update_mutex_;
   Modification modification_;
+  std::atomic<bool> is_modification_not_pushed_;
+  std::atomic<int> modifications_waiting_;
   LockFreeQueue<std::function<void()>, 50> task_queue_;
 
 

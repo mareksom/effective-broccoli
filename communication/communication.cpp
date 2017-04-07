@@ -7,7 +7,7 @@ static char buffer[buffer_size];
 bool expect(const std::string& s) {
   in("%s", buffer);
   if (s != buffer) {
-    fprintf(stderr, "\033[31mRead '%s', expected '%s'\033[0m\n",
+    fprintf(stderr, "\033[41m\033[97mRead '%s', expected '%s'\033[0m\n",
             buffer, s.c_str());
     return false;
   }
@@ -15,9 +15,10 @@ bool expect(const std::string& s) {
 }
 
 bool expectOK() {
-  in("%s", buffer);
+  in(" %c", &buffer[0]);
+  in("%[^\n]", buffer + 1);
   if (buffer != std::string("OK")) {
-    fprintf(stderr, "\033[31mexpectOK, got \"%s", buffer);
+    fprintf(stderr, "\033[41m\033[97mexpectOK, got \"%s", buffer);
     char c;
     while (in("%c", &c) != EOF) {
       if (c == '\n') {

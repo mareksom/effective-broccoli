@@ -41,7 +41,9 @@ Painter::Painter(const Options* options, Board* board, int width, int height)
   surface_buffer_updater_.SetCurrentObject(
       surface_buffer_updater_.GetFreeObject());
   // The initializing modification.
-  SetModification();
+  is_modification_not_pushed_.store(true);
+  modifications_waiting_.store(0);
+  TrySetModification();
 }
 
 void Painter::SetViewer(Viewer* viewer) {
@@ -69,14 +71,16 @@ void Painter::Resize(int width, int height) {
   modification_.ty -= (modification_.height - height) / 2.0;
   modification_.width = width;
   modification_.height = height;
-  SetModification();
+  is_modification_not_pushed_.store(true);
+  TrySetModification();
 }
 
 void Painter::Translate(double dx, double dy) {
   std::lock_guard<std::mutex> lock(update_mutex_);
   modification_.tx += dx;
   modification_.ty += dy;
-  SetModification();
+  is_modification_not_pushed_.store(true);
+  TrySetModification();
 }
 
 void Painter::Zoom(double x, double y, double factor) {
@@ -86,7 +90,8 @@ void Painter::Zoom(double x, double y, double factor) {
   modification_.tx = x + (modification_.tx - x) * factor;
   modification_.ty = y + (modification_.ty - y) * factor;
   modification_.scale *= factor;
-  SetModification();
+  is_modification_not_pushed_.store(true);
+  TrySetModification();
 }
 
 void Painter::InvalidateField(int x, int y) {
@@ -96,12 +101,29 @@ void Painter::InvalidateField(int x, int y) {
                      });
 }
 
+void Painter::InvalidateEverything() {
+  std::lock_guard<std::mutex> lock(update_mutex_);
+  task_queue_.Append(
+      [this]() -> void {
+        auto upper_left = SurfaceToBoardCoordinates(0, 0);
+        auto lower_right = SurfaceToBoardCoordinates(width_ * 2, height_ * 2);
+        fields_to_draw_.clear();
+        board_->IterateFieldsInRectangle(
+            upper_left.first, upper_left.second,
+            lower_right.first, lower_right.second,
+            [this](int x, int y) -> void {
+              fields_to_draw_.emplace(x, y);
+            });
+      });
+}
+
 void Painter::CenterOn(int x, int y) {
   std::lock_guard<std::mutex> lock(update_mutex_);
   const std::pair<double, double> center = board_->CenterOfField(x, y);
   modification_.tx = modification_.width - center.first * modification_.scale;
   modification_.ty = modification_.height - center.second * modification_.scale;
-  SetModification();
+  is_modification_not_pushed_.store(true);
+  TrySetModification();
 }
 
 std::pair<int, int> Painter::WindowToBoardCoordinates(double x,
@@ -127,10 +149,19 @@ std::pair<double, double> Painter::SurfaceToBoardCoordinates(
   return std::make_pair((x - tx_) / scale_, (y - ty_) / scale_);
 }
 
-void Painter::SetModification() {
+void Painter::TrySetModification() {
+  if (!is_modification_not_pushed_.load()) {
+    return;
+  }
+  if (modifications_waiting_.load()) {
+    return;
+  }
+  modifications_waiting_.fetch_add(1);
   task_queue_.Append([this, modification = modification_]() -> void {
+                       modifications_waiting_.fetch_sub(1);
                        ApplyModification(&modification);
                      });
+  is_modification_not_pushed_.store(false);
 }
 
 void Painter::UpdateCurrentSurface() {
@@ -151,6 +182,12 @@ void Painter::DrawLoop() {
   while (true) {
     std::function<void()> task;
     bool has_task = task_queue_.Consume(task);
+    if (!has_task) {
+      if (is_modification_not_pushed_.load()) {
+        std::lock_guard<std::mutex> lock(update_mutex_);
+        TrySetModification();
+      }
+    }
     if (!has_task and fields_to_draw_.empty()) {
       has_task = true;
       task_queue_.ConsumeBlock(task);
@@ -304,15 +341,15 @@ void Painter::ApplyModification(const Modification* modification) {
 
 void Painter::ProcessSomeFields() {
   if (fields_to_draw_.empty()) return;
-  const int board_width = options().controller()->BoardWidth();
-  const int board_height = options().controller()->BoardHeight();
+  int min_x, min_y, max_x, max_y;
+  options().controller()->GetExtensions(min_x, min_y, max_x, max_y);
   int cnt = options().NumberOfFieldsProcessedPerFrame();
   while (!fields_to_draw_.empty() and cnt-- > 0) {
     auto it = fields_to_draw_.begin();
     const int x = it->first;
     const int y = it->second;
     fields_to_draw_.erase(it);
-    if (0 <= x and x < board_width and 0 <= y and y < board_height) {
+    if (min_x <= x and x <= max_x and min_y <= y and y <= max_y) {
       context_->save();
         context_->translate(tx_, ty_);
         context_->scale(scale_, scale_);

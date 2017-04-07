@@ -1,9 +1,9 @@
 #ifndef GRID_OPTIONS_H_
 #define GRID_OPTIONS_H_
 
-namespace Grid {
+#include "controller.h"
 
-class Controller;
+namespace Grid {
 
 class Options {
  public:
@@ -11,7 +11,6 @@ class Options {
   Options();
 
   Controller* controller() const;
-  void SetController(Controller* controller);
 
   bool MaximizeOnStart() const;
   void SetMaximizeOnStart(bool maximize);
@@ -47,7 +46,7 @@ class Options {
   void SetSingleBoxMessageHeight(double height);
 
  private:
-  Controller* controller_ = nullptr;
+  mutable Controller controller_;
 
   bool maximize_on_start_ = false;
   int window_width_on_start_ = 800;

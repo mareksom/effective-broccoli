@@ -5,11 +5,7 @@ namespace Grid {
 Options::Options() {}
 
 Controller* Options::controller() const {
-  return controller_;
-}
-
-void Options::SetController(Controller* controller) {
-  controller_ = controller;
+  return &controller_;
 }
 
 bool Options::MaximizeOnStart() const {

@@ -11,11 +11,11 @@
 
 static void syserr(const char* fmt, ...) {
   va_list args;
-  fprintf(stderr, "ERROR: ");
+  fprintf(stderr, "\033[41m\033[97mERROR: ");
   va_start(args, fmt);
   vfprintf(stderr, fmt, args);
   va_end(args);
-  fprintf(stderr, " (%d; %s)\n", errno, strerror(errno));
+  fprintf(stderr, " (%d; %s)\033[0m\n", errno, strerror(errno));
   exit(EXIT_FAILURE);
 }
 
@@ -87,7 +87,7 @@ int out(const char* fmt, ...) {
   va_start(args, fmt);
   vsprintf(buffer, fmt, args);
   va_end(args);
-  printf("\033[34m%s\033[0m", buffer);
+  printf("You> \033[34m%s\033[0m", buffer);
   int ret = fprintf(to_server, "%s", buffer);
   return ret;
 }

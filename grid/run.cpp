@@ -1,8 +1,11 @@
 #include "run.h"
 
+#include <condition_variable>
 #include <gtkmm/application.h>
 #include <gtkmm/window.h>
 #include <iostream>
+#include <mutex>
+#include <thread>
 
 #include "painter.h"
 #include "viewer.h"
@@ -16,13 +19,18 @@ Glib::RefPtr<Gtk::Application> application;
 }  // namespace
 
 int RunBoard(int argc, char** argv,
-             Options options, std::unique_ptr<Board> board) {
+             const Options& options, std::unique_ptr<Board> board,
+             std::function<void()> user_thread) {
+  std::mutex mutex;
+  bool is_ready = false;
+  std::condition_variable cv;
+  std::thread(
+      [&mutex, &is_ready, &cv, user_thread]() -> void {
+        std::unique_lock<std::mutex> lock(mutex);
+        cv.wait(lock, [&is_ready]() -> bool { return is_ready; });
+        user_thread();
+      }).detach();
   argc = 1;
-  if (options.controller() == nullptr) {
-    std::cerr << "You must set a controller: "
-                 "options.SetController(my_controller);" << std::endl;
-    return -1;
-  }
   board->SetOptions(&options);
   if (!application) {
     application = Gtk::Application::create(argc, argv);
@@ -42,7 +50,12 @@ int RunBoard(int argc, char** argv,
     window.maximize();
   }
   viewer.show();
-  return application->run(window);
+  /* Wakes up the user thread. */ {
+    std::unique_lock<std::mutex> lock(mutex);
+    is_ready = true;
+    cv.notify_one();
+  }
+  application->run(window);
 }
 
 }  // namespace Grid
