@@ -81,13 +81,20 @@ int in(const char* fmt, ...) {
 }
 
 static char buffer[1 << 20];
+static bool do_print_out = true;
 
 int out(const char* fmt, ...) {
   va_list args;
   va_start(args, fmt);
   vsprintf(buffer, fmt, args);
   va_end(args);
-  printf("You> \033[34m%s\033[0m", buffer);
+  if (do_print_out) {
+    printf("You> \033[34m%s\033[0m", buffer);
+  }
   int ret = fprintf(to_server, "%s", buffer);
   return ret;
+}
+
+void SetPrintOut(bool do_print) {
+  do_print_out = do_print;
 }

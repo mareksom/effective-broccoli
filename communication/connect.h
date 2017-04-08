@@ -10,4 +10,6 @@ void Disconnect();
 int in(const char* fmt, ...);
 int out(const char* fmt, ...);
 
+void SetPrintOut(bool do_print);
+
 #endif  // COMMUNICATION_CONNECT_H_

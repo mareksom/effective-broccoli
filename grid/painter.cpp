@@ -114,6 +114,12 @@ void Painter::InvalidateEverything() {
             [this](int x, int y) -> void {
               fields_to_draw_.emplace(x, y);
             });
+        context_->save();
+          const double null_color = options().NullColor() / 255.0;
+          context_->set_source_rgb(null_color, null_color, null_color);
+          context_->paint();
+        context_->restore();
+        UpdateCurrentSurface();
       });
 }
 

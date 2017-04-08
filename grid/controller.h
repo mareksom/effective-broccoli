@@ -36,6 +36,8 @@ class Controller {
   // You -> Board.
   // -------------
 
+  void Clear();
+
   void SetFieldColor(int x, int y, int r, int g, int b);
   void SetObject(int x, int y, Object object, int r, int g, int b);
   StreamReader SetText(int x, int y);

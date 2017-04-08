@@ -35,6 +35,14 @@ Controller::Controller()
       min_x_(0), max_x_(0), min_y_(0), max_y_(0),
       fields_() {}
 
+void Controller::Clear() {
+  std::lock_guard<std::mutex> lock(mutex_);
+  InvalidateEverything();
+  min_x_ = max_x_ = min_y_ = max_y_ = 0;
+  fields_.clear();
+  current_time_ = std::numeric_limits<int64_t>::min();
+}
+
 void Controller::SetFieldColor(int x, int y, int r, int g, int b) {
   /* Lock */ {
     std::lock_guard<std::mutex> lock(mutex_);
