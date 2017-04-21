@@ -52,6 +52,10 @@ bool cwait() {
   if (!expectOK()) {
     return false;
   }
+  expect("WAITING");
+  double time;
+  in("%lf", &time);
+  fprintf(stderr, "WAITING TIME = %.10lf\n", time);
   if (!expectOK()) {
     return false;
   }

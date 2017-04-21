@@ -88,6 +88,7 @@ int in(const char* fmt, ...) {
 }
 
 static char buffer[1 << 20];
+static char buffer2[1 << 20];
 static bool do_print_out = true;
 
 int out(const char* fmt, ...) {
@@ -96,7 +97,22 @@ int out(const char* fmt, ...) {
   vsprintf(buffer, fmt, args);
   va_end(args);
   if (do_print_out) {
-    printf("You> \033[34m%s\033[0m", buffer);
+    int pos = 0;
+    for (int i = 0; ; i++) {
+      if (buffer[i] == '\0') {
+        buffer2[pos++] = '\0';
+        break;
+      } else if (buffer[i] == '\n') {
+        buffer2[pos++] = '\\';
+        buffer2[pos++] = 'n';
+      } else if (buffer[i] == '\t') {
+        buffer2[pos++] = '\\';
+        buffer2[pos++] = 't';
+      } else {
+        buffer2[pos++] = buffer[i];
+      }
+    }
+    printf("You> \033[34m%s\033[0m\n", buffer2);
   }
   int ret = fprintf(to_server, "%s", buffer);
   return ret;

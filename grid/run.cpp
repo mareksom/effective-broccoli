@@ -35,6 +35,7 @@ int RunBoard(int argc, char** argv,
   if (!application) {
     application = Gtk::Application::create(argc, argv);
   }
+  std::setlocale(LC_ALL, "C");
   Gtk::Window window;
   Painter painter(&options, board.get(),
                   options.WindowWidthOnStart(), options.WindowHeightOnStart());
