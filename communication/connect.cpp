@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <netdb.h>
+#include <netinet/tcp.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -53,6 +54,12 @@ void Connect(const std::string& host, int port) {
 
   if (connect(sock, (struct sockaddr*) &address, sizeof(address)) == -1) {
     syserr("connect");
+  }
+
+  int sso_flag = 1;
+  if (setsockopt(sock, IPPROTO_TCP, TCP_NODELAY,
+      (char*) &sso_flag, sizeof(int)) == -1) {
+    syserr("setsockopt");
   }
 
   to_server = fdopen(sock, "w");

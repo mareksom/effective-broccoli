@@ -119,7 +119,9 @@ void TryMove() {
 
 void Scan() {
   out("SCAN\n");
-  expectOK();
+  if (!expectOK()) {
+    return;
+  }
   int n;
   controller->SetFog();
   in("%d", &n);
@@ -163,9 +165,12 @@ int TurnsLeft() {
 
 void Algorytm() {
   debug() << "Trying to connect...";
-  Connect("test.natodia.net", 10000);
+  Connect("localhost", 12345);
   debug() << "Connected!";
-  login("team24", "5a6b808ca6");
+  if (!login("team24", "5a6b808ca6")) {
+    debug() << "Login failed :(";
+    return;
+  }
   debug() << "Login successful!";
   while (true) {
     cwait();
