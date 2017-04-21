@@ -5,6 +5,9 @@
 
 #include "connect.h"
 
+void SetCommandLimit(int limit);
+int GetCommandLimit();
+
 bool expect(const std::string& s);
 bool expectOK();
 

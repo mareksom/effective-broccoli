@@ -174,6 +174,7 @@ void Algorytm() {
   debug() << "Login successful!";
   while (true) {
     cwait();
+    SetCommandLimit(1);
     debug() << imie(TurnsLeft());
     Scan();
     TryMove();

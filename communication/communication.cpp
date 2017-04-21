@@ -1,8 +1,24 @@
 #include "communication.h"
 
-static const int buffer_size = 1024;
+#include <limits>
 
-static char buffer[buffer_size];
+int command_limit = std::numeric_limits<int>::max();
+
+void SetCommandLimit(int limit) {
+  fprintf(stderr, "SetCommandLimit(limit = %d)\n", limit);
+  if (limit < 0) {
+    fprintf(stderr, "Error: SetCommandLimit: limit < 0 (limit = %d)\n", limit);
+    command_limit = 0;
+    return;
+  }
+  command_limit = limit;
+}
+
+int GetCommandLimit() {
+  return command_limit;
+}
+
+static char buffer[1 << 20];
 
 bool expect(const std::string& s) {
   in("%s", buffer);
@@ -15,6 +31,13 @@ bool expect(const std::string& s) {
 }
 
 bool expectOK() {
+  if (command_limit <= 0) {
+    fprintf(stderr,
+            "\033[41m\033[97mexpectOK, Command limit reached.\033[0m\n");
+    abort();
+    return false;
+  }
+  command_limit--;
   in(" %c", &buffer[0]);
   in("%[^\n]", buffer + 1);
   if (buffer != std::string("OK")) {
